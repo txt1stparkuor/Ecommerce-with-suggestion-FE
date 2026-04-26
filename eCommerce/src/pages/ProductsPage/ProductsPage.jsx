@@ -11,6 +11,7 @@ import {
 import { getProducts } from "../../apis/product.api";
 import Product from "../../components/Product/Product";
 import FilterSidebar from '../../components/FilterSidebar/FilterSidebar';
+import { productKeys } from '@/constants/queryKeys';
 
 const { Content } = Layout
 
@@ -30,7 +31,7 @@ const ProductsPage = () => {
   }
 
   const { data: productsData, isLoading } = useQuery({
-    queryKey: ['products', queryParams],
+    queryKey: productKeys.list(queryParams),
     queryFn: () => {
       const params = {
         keyword: queryParams.keyword,
@@ -43,7 +44,6 @@ const ProductsPage = () => {
         sortBy: queryParams.sortBy,
         isAscending: queryParams.isAscending,
       }
-      // Remove null/undefined params
       Object.keys(params).forEach(key => (params[key] == null) && delete params[key]);
       return getProducts(params)
     },
@@ -62,7 +62,7 @@ const ProductsPage = () => {
         newSearchParams.delete(key)
       }
     })
-    newSearchParams.set('page', '1') // Reset to first page on filter change
+    newSearchParams.set('page', '1') 
     setSearchParams(newSearchParams)
   }, [searchParams, setSearchParams])
 

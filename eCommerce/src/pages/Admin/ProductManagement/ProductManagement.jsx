@@ -25,10 +25,11 @@ import {
   createProduct,
   updateProduct,
   getProductById,
-  exportAmazonCSV, // Đảm bảo đã import hàm này
+  exportAmazonCSV, 
 } from "../../../apis/product.api";
 import useDebounce from "../../../hooks/useDebounce";
 import ProductForm from "../../../components/ProductForm/ProductForm";
+import { productKeys } from "@/constants/queryKeys";
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -65,7 +66,7 @@ const ProductManagement = () => {
   }, [debouncedSearchTerm, keyword, setSearchParams]);
 
   const { data: productsData, isLoading } = useQuery({
-    queryKey: ["products", { keyword, page, pageSize }],
+    queryKey: productKeys.list({ keyword, page, pageSize }),
     queryFn: () => getProducts({ keyword, pageNum: page, pageSize }),
     keepPreviousData: true,
   });
@@ -74,21 +75,12 @@ const ProductManagement = () => {
   const handleExportCSV = async () => {
     setIsExporting(true);
     try {
-      // Gọi API - Lúc này 'result' chính là cái Blob nhờ vào interceptor bóc tách response.data
       const result = await exportAmazonCSV();
-      console.log(result)
-      // Kiểm tra xem dữ liệu có tồn tại không
       if (!result) {
         toast.error("No data received");
         return;
       }
-
-      // Tạo Blob trực tiếp từ result
       const blob = new Blob([result], { type: "text/csv;charset=utf-8;" });
-
-      // Debug: Kiểm tra size của blob, nếu > 0 là thành công
-      console.log("Blob size:", blob.size);
-
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -99,7 +91,6 @@ const ProductManagement = () => {
       document.body.appendChild(link);
       link.click();
 
-      // Dọn dẹp
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
@@ -116,7 +107,7 @@ const ProductManagement = () => {
     mutationFn: (body) => createProduct(body),
     onSuccess: () => {
       toast.success("Product created successfully");
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
       setIsModalOpen(false);
     },
     onError: (error) => {
@@ -128,7 +119,7 @@ const ProductManagement = () => {
     mutationFn: ({ id, body }) => updateProduct(id, body),
     onSuccess: () => {
       toast.success("Product updated successfully");
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
       setIsModalOpen(false);
       setEditingProduct(null);
     },
@@ -141,7 +132,7 @@ const ProductManagement = () => {
     mutationFn: (id) => deleteProduct(id),
     onSuccess: () => {
       toast.success("Product deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || "Failed to delete product");

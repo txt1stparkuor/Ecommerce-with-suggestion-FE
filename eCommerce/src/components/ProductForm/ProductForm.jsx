@@ -16,6 +16,7 @@ import useDebounce from "../../hooks/useDebounce";
 import { useQuery } from "@tanstack/react-query";
 import { getLeafCategories } from "../../apis/category.api";
 import { productSchema } from "../../utils/productValidation";
+import { categoryKeys } from "@/constants/queryKeys";
 
 const ProductForm = ({ open, onCancel, onSubmit, initialValues, loading }) => {
   const isEditing = !!initialValues;
@@ -36,9 +37,10 @@ const ProductForm = ({ open, onCancel, onSubmit, initialValues, loading }) => {
   const debouncedKeyword = useDebounce(keyword, 500);
 
   const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
-    queryKey: ["categories-leaf", debouncedKeyword],
+    queryKey: categoryKeys.leaf({ keyword: debouncedKeyword }),
     queryFn: () => getLeafCategories({ keyword: debouncedKeyword }),
   });
+
 
   useEffect(() => {
     if (open) {

@@ -11,6 +11,7 @@ import {
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
+import { userKeys } from "@/constants/queryKeys";
 
 const { Header, Sider, Content } = Layout;
 
@@ -26,9 +27,9 @@ const AdminLayout = () => {
 
   const handleLogout = () => {
     clearUser();
-    queryClient.removeQueries({ queryKey: ["user"] });
+    queryClient.removeQueries({ queryKey: userKeys.all });
     navigate("/login");
-  };
+  }
 
   const menuItems = [
     {

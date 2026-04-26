@@ -27,6 +27,7 @@ import {
 } from "../../../apis/user.api";
 import useDebounce from "../../../hooks/useDebounce";
 import UserForm from "../../../components/UserForm/UserForm";
+import { userKeys } from "@/constants/queryKeys";
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -63,7 +64,7 @@ const UserManagement = () => {
   }, [debouncedSearchTerm, keyword, setSearchParams]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["users", { keyword, page, pageSize }],
+    queryKey: userKeys.list({ keyword, page, pageSize }),
     queryFn: () => getUsers({ keyword, pageNum: page, pageSize }),
     keepPreviousData: true,
   });
@@ -72,7 +73,7 @@ const UserManagement = () => {
     mutationFn: (body) => createUser(body),
     onSuccess: () => {
       toast.success("User created successfully");
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       setIsModalOpen(false);
     },
     onError: (error) => {
@@ -84,7 +85,7 @@ const UserManagement = () => {
     mutationFn: ({ id, body }) => updateUser(id, body),
     onSuccess: () => {
       toast.success("User updated successfully");
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       setIsModalOpen(false);
       setEditingUser(null);
     },
@@ -97,7 +98,7 @@ const UserManagement = () => {
     mutationFn: (id) => deleteUser(id),
     onSuccess: () => {
       toast.success("User deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || "Failed to delete user");

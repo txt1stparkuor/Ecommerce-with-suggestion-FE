@@ -33,6 +33,7 @@ import { addToCart } from "../../apis/cart.api";
 import { reviewSchema } from "../../utils/reviewValidation";
 import useAuth from "../../hooks/useAuth";
 import Product from "../../components/Product/Product";
+import { cartKeys, productKeys } from "@/constants/queryKeys";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -60,13 +61,13 @@ const ProductDetail = () => {
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ["product", productId],
+    queryKey: productKeys.detail(productId),
     queryFn: () => getProductById(productId),
     enabled: !!productId,
   });
 
   const { data: reviewsData } = useQuery({
-    queryKey: ["reviews", productId, reviewPage],
+    queryKey: productKeys.reviews(productId, { page: reviewPage }),
     queryFn: () =>
       getProductReviews(productId, { pageNum: reviewPage, pageSize: 5 }),
     enabled: !!productId,
@@ -75,19 +76,19 @@ const ProductDetail = () => {
 
   const { data: recommendationsData, isLoading: isLoadingRecommendations } =
     useQuery({
-      queryKey: ["recommendations", productId],
+      queryKey: productKeys.recommendationsHybrid(productId, { page: 1, size: 48 }),
       queryFn: () =>
         getProductRecommendationsHybrid(productId, {
           pageNum: 1,
           pageSize: 48,
         }),
-      enabled: !!productId && isAuthenticated, // Only fetch if productId and user is authenticated
+      enabled: !!productId && isAuthenticated, 
     });
 
   const addToCartMutation = useMutation({
     mutationFn: (body) => addToCart(body),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      queryClient.invalidateQueries({ queryKey: cartKeys.all });
       toast.success("Added to cart");
     },
   });
@@ -98,8 +99,8 @@ const ProductDetail = () => {
       toast.success("Review submitted successfully");
       setIsReviewModalOpen(false);
       reset();
-      queryClient.invalidateQueries({ queryKey: ["reviews", productId] });
-      queryClient.invalidateQueries({ queryKey: ["product", productId] });
+      queryClient.invalidateQueries({ queryKey: productKeys.reviews(productId) });
+      queryClient.invalidateQueries({ queryKey: productKeys.detail(productId) });
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || "Failed to submit review");
@@ -334,7 +335,7 @@ const ProductDetail = () => {
                         ? Math.round(
                             ((item.actualPrice - item.discountedPrice) /
                               item.actualPrice) *
-                              100
+                              100,
                           )
                         : 0,
                   };

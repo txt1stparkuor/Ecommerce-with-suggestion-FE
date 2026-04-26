@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Typography, Tag, Image, Spin, Card, Descriptions } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { getOrderById } from "../../apis/order.api";
+import { orderKeys } from "@/constants/queryKeys";
 
 const { Title, Text } = Typography;
 
@@ -11,7 +12,7 @@ const OrderDetail = () => {
   const { orderId } = useParams();
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["order", orderId],
+    queryKey: orderKeys.detail(orderId),
     queryFn: () => getOrderById(orderId),
     enabled: !!orderId,
   });
