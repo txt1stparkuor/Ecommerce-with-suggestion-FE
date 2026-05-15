@@ -127,6 +127,11 @@ const Login = () => {
                 />
               )}
             />
+            <div className="text-right mt-1">
+              <Link to="/forgot-password" className="text-blue-600 hover:underline text-sm">
+                Forgot password?
+              </Link>
+            </div>
             {errors.password && (
               <span className="text-xs text-red-500">
                 {errors.password.message}
