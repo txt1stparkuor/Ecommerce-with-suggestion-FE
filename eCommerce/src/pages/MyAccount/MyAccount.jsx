@@ -11,7 +11,6 @@ const MyAccount = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Define sidebar menu items
   const menuItems = [
     {
       key: '/user/account/profile',
@@ -45,7 +44,7 @@ const MyAccount = () => {
                 </Text>
                 <div className="flex items-center gap-1 text-gray-500 text-xs cursor-pointer hover:text-[#ee4d2d] transition-colors">
                   <EditOutlined />
-                  <span>Edit Profile</span>
+                  <span onClick={() => navigate('profile')}>Edit Profile</span>
                 </div>
               </div>
             </div>

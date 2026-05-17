@@ -12,6 +12,7 @@ import SimilarProducts from "../pages/SimilarProducts/SimilarProducts";
 import ProductRecommendations from "../pages/ProductRecommendations/ProductRecommendations";
 import UserRecommendations from "../pages/UserRecommendations/UserRecommendations";
 import MyAccount from "../pages/MyAccount/MyAccount";
+import Profile from "../pages/Profile/Profile";
 
 const userRoutes = [
   {
@@ -64,7 +65,12 @@ const userRoutes = [
           {
             path: "user/account",
             element: <MyAccount />,
-            children: [],
+            children: [
+              {
+                path: "profile",
+                element: <Profile />,
+              },
+            ],
           },
         ]
       },
