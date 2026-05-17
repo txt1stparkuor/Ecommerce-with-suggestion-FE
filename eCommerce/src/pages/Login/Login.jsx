@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Input, Button, Card, Typography, Grid } from "antd";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
-import { UserOutlined, LockOutlined } from "@ant-design/icons";
+import { MailOutlined, LockOutlined } from "@ant-design/icons";
 import backgroundImage from "../../assets/background.jpg";
 
 import { login } from "../../apis/auth.api";
@@ -29,7 +29,7 @@ const Login = () => {
   } = useForm({
     resolver: yupResolver(loginSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
@@ -79,29 +79,29 @@ const Login = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <label
-              htmlFor="username"
+              htmlFor="email"
               className="text-sm font-medium text-gray-700"
             >
-              Username
+              Email Address
             </label>
             <Controller
-              name="username"
+              name="email"
               control={control}
               render={({ field }) => (
                 <Input
                   {...field}
-                  id="username"
-                  autoComplete="username"
-                  prefix={<UserOutlined />}
-                  placeholder="Enter your username"
-                  status={errors.username ? "error" : ""}
+                  id="email"
+                  autoComplete="email"
+                  prefix={<MailOutlined />}
+                  placeholder="Enter your email address"
+                  status={errors.email ? "error" : ""}
                   size={inputSize}
                 />
               )}
             />
-            {errors.username && (
+            {errors.email && (
               <span className="text-xs text-red-500">
-                {errors.username.message}
+                {errors.email.message}
               </span>
             )}
           </div>
