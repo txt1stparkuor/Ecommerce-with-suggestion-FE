@@ -45,6 +45,9 @@ const Header = () => {
 
   const userContent = (
     <div className="flex flex-col gap-2 min-w-[150px]">
+      <Link to="/user/account" className="text-gray-700 hover:text-[#ee4d2d] py-1">
+        My Account
+      </Link>
       <Link to="/my-orders" className="text-gray-700 hover:text-[#ee4d2d] py-1">
         My Orders
       </Link>
