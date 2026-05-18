@@ -13,6 +13,7 @@ import ProductRecommendations from "../pages/ProductRecommendations/ProductRecom
 import UserRecommendations from "../pages/UserRecommendations/UserRecommendations";
 import MyAccount from "../pages/MyAccount/MyAccount";
 import Profile from "../pages/Profile/Profile";
+import ChangePassword from "../pages/ChangePassword/ChangePassword";
 
 const userRoutes = [
   {
@@ -69,6 +70,10 @@ const userRoutes = [
               {
                 path: "profile",
                 element: <Profile />,
+              },
+              {
+                path: "password",
+                element: <ChangePassword />,
               },
             ],
           },

@@ -1,4 +1,4 @@
-import { apiDefault } from ".";
+import { apiDefault , api} from ".";
 import { ApiConstant } from "../constants/api.constant";
 
 const authApi = () => ({
@@ -10,7 +10,9 @@ const authApi = () => ({
     apiDefault.post(ApiConstant.auth.forgotPassword, data),
   resetPassword: async (data) =>
     apiDefault.post(ApiConstant.auth.resetPassword, data),
+  changePassword: async (data) =>
+    api.post(ApiConstant.auth.changePassword, data),
 });
 
-export const { register, login, refreshToken, forgotPassword, resetPassword } =
+export const { register, login, refreshToken, forgotPassword, resetPassword, changePassword } =
   authApi();

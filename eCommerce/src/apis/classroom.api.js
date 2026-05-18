@@ -36,7 +36,6 @@ const classroomApi = () => ({
 
   createNotification: async (classroomId, payload) => {
     const url = ApiConstant.classrooms.createNotification(classroomId)
-    console.log(url);
     return api.post(url, payload)
   },
 
