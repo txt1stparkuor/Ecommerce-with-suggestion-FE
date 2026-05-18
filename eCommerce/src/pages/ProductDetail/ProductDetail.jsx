@@ -18,6 +18,7 @@ import {
   Input,
   Breadcrumb,
   Card,
+  Grid,
 } from "antd";
 import { ShoppingCartOutlined, UserOutlined } from "@ant-design/icons";
 import toast from "react-hot-toast";
@@ -36,6 +37,7 @@ import Product from "../../components/Product/Product";
 import { cartKeys, productKeys } from "@/constants/queryKeys";
 
 const { Title, Text, Paragraph } = Typography;
+const { useBreakpoint } = Grid;
 
 const ProductDetail = () => {
   const { productId } = useParams();
@@ -46,6 +48,8 @@ const ProductDetail = () => {
   const { isAuthenticated } = useAuth();
   const reviewPage = Number(searchParams.get("page")) || 1;
   const queryClient = useQueryClient();
+
+  const screens = useBreakpoint();
 
   const {
     control,
@@ -139,13 +143,14 @@ const ProductDetail = () => {
   if (!product) return null;
 
   return (
-    <div className="container mx-auto py-8 px-4 bg-white mt-4 rounded-sm shadow-sm">
+    <div className="container mx-auto py-4 md:py-8 px-4 bg-white mt-4 rounded-sm shadow-sm">
       <div className="mb-4">
         <Breadcrumb
+          className="text-xs md:text-sm"
           items={product.categoryPath?.split("|").map((c) => ({ title: c }))}
         />
       </div>
-      <div className="flex flex-col md:flex-row gap-8">
+      <div className="flex flex-col md:flex-row gap-6 md:gap-8">
         {/* Left Side - Image */}
         <div className="w-full md:w-[35%]">
           <div className="relative w-full pt-[100%] overflow-hidden border border-gray-200 rounded-md">
@@ -158,12 +163,12 @@ const ProductDetail = () => {
         </div>
 
         {/* Right Side - Details */}
-        <div className="w-full md:w-[65%] flex flex-col gap-4">
-          <Title level={3} className="!mb-0 font-medium">
+        <div className="w-full md:w-[65%] flex flex-col gap-3 md:gap-4">
+          <Title level={3} className="!mb-0 font-medium !text-lg md:!text-xl lg:!text-2xl">
             {product.name}
           </Title>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 md:gap-4 flex-wrap">
             <div className="flex items-center gap-1 border-b border-b-[#ee4d2d] pb-1">
               <span className="text-lg font-bold text-[#ee4d2d] border-b border-b-[#ee4d2d]">
                 {product.averageRating?.toFixed(1)}
@@ -176,7 +181,7 @@ const ProductDetail = () => {
                 style={{ fontSize: 14 }}
               />
             </div>
-            <div className="flex h-6 items-center gap-1 border-l border-gray-300 pl-4">
+            <div className="flex h-6 items-center gap-1 border-l border-gray-300 pl-3 md:pl-4">
               <span className="text-lg font-medium border-b border-b-black">
                 {product.ratingCount}
               </span>
@@ -186,11 +191,11 @@ const ProductDetail = () => {
 
           <div className="flex items-center gap-4 rounded-sm bg-gray-50 p-4">
             {product.originalPrice && product.discountPercentage > 0 && (
-              <Text delete className="text-base text-gray-500">
+              <Text delete className="text-sm md:text-base text-gray-500">
                 ₹{product.originalPrice.toLocaleString()}
               </Text>
             )}
-            <Text className="text-3xl font-medium text-[#ee4d2d]">
+            <Text className="text-2xl md:text-3xl font-medium text-[#ee4d2d]">
               ₹{product.price.toLocaleString()}
             </Text>
             {product.discountPercentage > 0 && (
@@ -200,7 +205,7 @@ const ProductDetail = () => {
             )}
           </div>
 
-          <div className="mt-4 flex items-center gap-8">
+          <div className="mt-2 md:mt-4 flex items-center gap-4 md:gap-8">
             <span className="w-24 text-gray-500">Quantity</span>
             <div className="flex items-center gap-4">
               <InputNumber
@@ -216,13 +221,13 @@ const ProductDetail = () => {
             </div>
           </div>
 
-          <div className="mt-6 flex items-center gap-4">
+          <div className="mt-4 md:mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:gap-4">
             <Button
               type="primary"
               ghost
               icon={<ShoppingCartOutlined />}
-              size="large"
-              className="h-12 px-8 !border-[#ee4d2d] !bg-[#ee4d2d]/10 !text-[#ee4d2d]"
+              size={screens.md ? "large" : "middle"}
+              className="h-10 md:h-12 px-6 md:px-8 !border-[#ee4d2d] !bg-[#ee4d2d]/10 !text-[#ee4d2d]"
               onClick={() => addToCartMutation.mutate({ productId, quantity })}
               loading={addToCartMutation.isPending}
             >
@@ -230,8 +235,8 @@ const ProductDetail = () => {
             </Button>
             <Button
               type="primary"
-              size="large"
-              className="h-12 px-12 !bg-[#ee4d2d]"
+              size={screens.md ? "large" : "middle"}
+              className="h-10 md:h-12 px-10 md:px-12 !bg-[#ee4d2d]"
               onClick={handleBuyNow}
               loading={addToCartMutation.isPending}
             >
@@ -241,27 +246,28 @@ const ProductDetail = () => {
         </div>
       </div>
 
-      <div className="mt-8 border-t pt-4">
-        <Title level={4}>Product Description</Title>
-        <Paragraph className="whitespace-pre-line text-gray-600 text-lg">
+      <div className="mt-6 md:mt-8 border-t pt-4">
+        <Title level={4} className="text-lg md:text-xl">Product Description</Title>
+        <Paragraph className="whitespace-pre-line text-gray-600 text-base md:text-lg">
           {product.description?.replace(/\|/g, "\n✔️ ")}
         </Paragraph>
       </div>
 
-      <div className="mt-8 border-t pt-4">
+      <div className="mt-6 md:mt-8 border-t pt-4">
         <div className="flex items-center justify-between">
-          <Title level={4} className="!mb-0">
+          <Title level={4} className="!mb-0 text-lg md:text-xl">
             Product Reviews
           </Title>
           <Button
             type="primary"
             onClick={() => setIsReviewModalOpen(true)}
-            className="bg-[#ee4d2d]"
+            size={screens.md ? "middle" : "small"}
+            className="bg-[#ee4d2d] text-xs md:text-sm"
           >
             Write a Review
           </Button>
         </div>
-        <div className="flex flex-col gap-6 mt-4">
+        <div className="flex flex-col gap-4 md:gap-6 mt-4">
           {reviews.length > 0 ? (
             <>
               {reviews.map((review) => (
@@ -270,21 +276,21 @@ const ProductDetail = () => {
                   className="border-b border-gray-100 pb-6 last:border-0"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <Avatar icon={<UserOutlined />} size="small" />
-                    <Text strong>{review.userFullName}</Text>
+                    <Avatar icon={<UserOutlined />} size={screens.md ? "middle" : "small"} />
+                    <Text strong className="text-sm md:text-base">{review.userFullName}</Text>
                   </div>
                   <div className="flex items-center gap-2 mb-2">
                     <Rate
                       disabled
                       defaultValue={review.rating}
-                      style={{ fontSize: 14 }}
+                      style={{ fontSize: 12 }}
                     />
                     <Text type="secondary" className="text-xs">
                       {new Date(review.createdAt).toLocaleDateString()}
                     </Text>
                   </div>
                   {review.comment && (
-                    <Paragraph className="text-gray-600 mb-0">
+                    <Paragraph className="text-gray-600 mb-0 text-sm md:text-base">
                       {review.comment}
                     </Paragraph>
                   )}
@@ -292,6 +298,7 @@ const ProductDetail = () => {
               ))}
               <div className="flex justify-end">
                 <Pagination
+                  size={screens.md ? "middle" : "small"}
                   current={reviewPage}
                   pageSize={5}
                   total={totalReviews}
