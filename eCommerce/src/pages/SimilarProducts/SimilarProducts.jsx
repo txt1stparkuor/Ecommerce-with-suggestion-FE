@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Typography, Pagination } from 'antd'
 import { getSimilarProducts } from '../../apis/product.api'
 import ProductGrid from '../../components/ProductGrid/ProductGrid'
+import { productKeys } from '@/constants/queryKeys'
 
 const { Title } = Typography
 
@@ -14,7 +15,7 @@ const SimilarProducts = () => {
   const pageSize = 48
 
   const { data, isLoading } = useQuery({
-    queryKey: ['similarProducts', productId, page],
+    queryKey: productKeys.recommendations(productId, { page }),
     queryFn: () => getSimilarProducts(productId, { pageNum: page, pageSize }),
     enabled: !!productId,
     keepPreviousData: true,

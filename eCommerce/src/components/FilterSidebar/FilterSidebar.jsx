@@ -6,12 +6,13 @@ import { useForm, Controller } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { getAllCategories } from '../../apis/category.api'
 import { priceRangeSchema } from '../../utils/filterValidation'
+import { categoryKeys } from '@/constants/queryKeys'
 
 const { Title } = Typography
 
 const FilterSidebar = memo(({ queryParams, onFilterChange, onClearFilters }) => {
   const { data: categoriesData } = useQuery({
-    queryKey: ['categories'],
+    queryKey: categoryKeys.lists(),
     queryFn: getAllCategories,
   })
 

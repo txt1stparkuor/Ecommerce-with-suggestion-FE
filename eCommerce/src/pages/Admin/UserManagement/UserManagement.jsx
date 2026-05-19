@@ -86,6 +86,7 @@ const UserManagement = () => {
     onSuccess: () => {
       toast.success("User updated successfully");
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(id) });
       setIsModalOpen(false);
       setEditingUser(null);
     },
@@ -99,6 +100,7 @@ const UserManagement = () => {
     onSuccess: () => {
       toast.success("User deleted successfully");
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(id) });
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || "Failed to delete user");

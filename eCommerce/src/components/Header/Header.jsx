@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import useAuth from '../../hooks/useAuth'
 import { getCurrentUser } from '../../apis/user.api'
 import { getCart } from '../../apis/cart.api'
+import { cartKeys, userKeys } from '@/constants/queryKeys'
 
 const Header = () => {
   const { isAuthenticated, user, clearUser, setUserInfo } = useAuth()
@@ -14,13 +15,13 @@ const Header = () => {
   const [keyword, setKeyword] = useState('')
 
   const { data: userData } = useQuery({
-    queryKey: ['user', 'me'],
+    queryKey: userKeys.currentUser(),
     queryFn: getCurrentUser,
     enabled: isAuthenticated && !user?.username,
   })
 
   const { data: cartData } = useQuery({
-    queryKey: ['cart'],
+    queryKey: cartKeys.all,
     queryFn: getCart,
     enabled: isAuthenticated,
   })
@@ -33,8 +34,8 @@ const Header = () => {
 
   const handleLogout = () => {
     clearUser()
-    queryClient.removeQueries({ queryKey: ['user'] })
-    queryClient.removeQueries({ queryKey: ['cart'] })
+    queryClient.removeQueries({ queryKey: userKeys.all })
+    queryClient.removeQueries({ queryKey: cartKeys.all })
   }
 
   const handleSearch = () => {

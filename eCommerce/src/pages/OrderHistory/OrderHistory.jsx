@@ -20,7 +20,7 @@ const OrderHistory = () => {
   const cancelOrderMutation = useMutation({
     mutationFn: (orderId) => cancelOrder(orderId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: orderKeys.myOrders() });
+      queryClient.invalidateQueries({ queryKey: orderKeys.all });
       toast.success("Order cancelled successfully");
     },
     onError: (err) => {

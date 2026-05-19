@@ -14,8 +14,9 @@ import {
   Divider,
 } from 'antd'
 import { getProducts } from '../../apis/product.api'
-import { getCategories } from '../../apis/category.api'
+import { getAllCategories } from '../../apis/category.api'
 import Product from '../../components/Product/Product'
+import { categoryKeys, productKeys } from '@/constants/queryKeys'
 
 const { Sider, Content } = Layout
 const { Title } = Typography
@@ -36,12 +37,12 @@ const ProductByCategory = () => {
   }
 
   const { data: categoriesData } = useQuery({
-    queryKey: ['categories'],
-    queryFn: getCategories,
+    queryKey: categoryKeys.lists(),
+    queryFn: getAllCategories,
   })
 
   const { data: productsData, isLoading } = useQuery({
-    queryKey: ['products', queryParams],
+    queryKey: productKeys.list(queryParams),
     queryFn: () => {
       const params = {
         pageNum: queryParams.page,

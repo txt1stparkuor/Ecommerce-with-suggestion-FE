@@ -39,7 +39,7 @@ const ProductManagement = () => {
   const queryClient = useQueryClient();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isExporting, setIsExporting] = useState(false); // State xử lý loading khi tải file
+  const [isExporting, setIsExporting] = useState(false); 
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState(
     searchParams.get("keyword") || ""
@@ -120,6 +120,7 @@ const ProductManagement = () => {
     onSuccess: () => {
       toast.success("Product updated successfully");
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productKeys.details() });
       setIsModalOpen(false);
       setEditingProduct(null);
     },
@@ -133,6 +134,7 @@ const ProductManagement = () => {
     onSuccess: () => {
       toast.success("Product deleted successfully");
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productKeys.details() });
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || "Failed to delete product");

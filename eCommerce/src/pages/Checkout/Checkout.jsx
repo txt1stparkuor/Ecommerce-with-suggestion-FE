@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Typography, Input, Button, Image } from 'antd'
 import toast from 'react-hot-toast'
 import { createOrder } from '../../apis/order.api'
+import { cartKeys, orderKeys } from '@/constants/queryKeys'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -30,7 +31,8 @@ const Checkout = () => {
     mutationFn: (data) => createOrder(data),
     onSuccess: () => {
       toast.success('Order placed successfully')
-      queryClient.invalidateQueries({ queryKey: ['cart'] })
+      queryClient.invalidateQueries({ queryKey: cartKeys.all })
+      queryClient.invalidateQueries({ queryKey: orderKeys.all }) 
       navigate('/')
     },
     onError: () => {

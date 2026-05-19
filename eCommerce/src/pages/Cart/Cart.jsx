@@ -5,6 +5,7 @@ import { DeleteOutlined } from '@ant-design/icons'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { getCart, updateCartItem, deleteCartItem } from '../../apis/cart.api'
+import { cartKeys } from '@/constants/queryKeys'
 
 const { Text, Title } = Typography
 
@@ -13,7 +14,7 @@ const Cart = () => {
   const location = useLocation()
   const queryClient = useQueryClient()
   const { data, isLoading } = useQuery({
-    queryKey: ['cart'],
+    queryKey: cartKeys.all,
     queryFn: getCart,
   })
 
@@ -34,7 +35,7 @@ const Cart = () => {
   const updateMutation = useMutation({
     mutationFn: ({ itemId, quantity }) => updateCartItem({ itemId, quantity }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] })
+      queryClient.invalidateQueries({ queryKey: cartKeys.all })
     },
     onError: () => {
       toast.error('Failed to update quantity')
@@ -44,7 +45,7 @@ const Cart = () => {
   const deleteMutation = useMutation({
     mutationFn: (itemId) => deleteCartItem(itemId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] })
+      queryClient.invalidateQueries({ queryKey: cartKeys.all })
       toast.success('Item removed')
     },
   })
@@ -54,7 +55,7 @@ const Cart = () => {
       await Promise.all(Array.from(ids).map((id) => deleteCartItem(id)))
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] })
+      queryClient.invalidateQueries({ queryKey: cartKeys.all })
       setSelectedItems(new Set())
       toast.success('Selected items removed')
     },

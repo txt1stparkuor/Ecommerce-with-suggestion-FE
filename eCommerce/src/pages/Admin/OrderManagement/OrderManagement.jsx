@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import { getAllOrders, updateOrderStatus, getOrderById } from '../../../apis/order.api'
 import { EyeOutlined, EditOutlined } from '@ant-design/icons'
 import useDebounce from '../../../hooks/useDebounce'
+import { orderKeys } from '@/constants/queryKeys'
 
 const { Title, Text } = Typography
 const { Search } = Input
@@ -41,7 +42,7 @@ const OrderManagement = () => {
   }, [debouncedSearchTerm, keyword, setSearchParams])
 
   const { data: ordersData, isLoading } = useQuery({
-    queryKey: ['adminOrders', { keyword, page, pageSize }],
+    queryKey: orderKeys.list({ keyword, page, pageSize }),
     queryFn: () => getAllOrders({ keyword, pageNum: page, pageSize }),
     keepPreviousData: true,
   })
@@ -50,7 +51,7 @@ const OrderManagement = () => {
     mutationFn: ({ orderId, status }) => updateOrderStatus(orderId, { status }),
     onSuccess: () => {
       toast.success('Order status updated successfully')
-      queryClient.invalidateQueries({ queryKey: ['adminOrders'] })
+      queryClient.invalidateQueries({ queryKey: orderKeys.lists() })
       setIsUpdateModalOpen(false)
       setSelectedOrder(null)
     },
