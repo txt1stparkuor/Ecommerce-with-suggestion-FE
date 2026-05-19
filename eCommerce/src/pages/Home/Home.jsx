@@ -21,12 +21,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { getAllCategories } from "../../apis/category.api";
 import ProductList from "../../components/ProductList/ProductList";
 import RecommendedProducts from "../../components/RecommendedProducts/RecommendedProducts";
+import { categoryKeys } from "@/constants/queryKeys";
 
 const { Title } = Typography;
 
 const Home = () => {
   const { data: categoriesData, isLoading } = useQuery({
-    queryKey: ["categories"],
+    queryKey: categoryKeys.lists(),
     queryFn: getAllCategories,
   });
   const navigate = useNavigate();

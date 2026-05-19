@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import useAuth from '../../hooks/useAuth'
 import { getCurrentUser } from '../../apis/user.api'
 import { getCart } from '../../apis/cart.api'
+import { cartKeys, userKeys } from '@/constants/queryKeys'
 
 const Header = () => {
   const { isAuthenticated, user, clearUser, setUserInfo } = useAuth()
@@ -14,13 +15,13 @@ const Header = () => {
   const [keyword, setKeyword] = useState('')
 
   const { data: userData } = useQuery({
-    queryKey: ['user', 'me'],
+    queryKey: userKeys.currentUser(),
     queryFn: getCurrentUser,
     enabled: isAuthenticated && !user?.username,
   })
 
   const { data: cartData } = useQuery({
-    queryKey: ['cart'],
+    queryKey: cartKeys.all,
     queryFn: getCart,
     enabled: isAuthenticated,
   })
@@ -33,8 +34,8 @@ const Header = () => {
 
   const handleLogout = () => {
     clearUser()
-    queryClient.removeQueries({ queryKey: ['user'] })
-    queryClient.removeQueries({ queryKey: ['cart'] })
+    queryClient.removeQueries({ queryKey: userKeys.all })
+    queryClient.removeQueries({ queryKey: cartKeys.all })
   }
 
   const handleSearch = () => {
@@ -45,6 +46,9 @@ const Header = () => {
 
   const userContent = (
     <div className="flex flex-col gap-2 min-w-[150px]">
+      <Link to="/user/account" className="text-gray-700 hover:text-[#ee4d2d] py-1">
+        My Account
+      </Link>
       <Link to="/my-orders" className="text-gray-700 hover:text-[#ee4d2d] py-1">
         My Orders
       </Link>
@@ -60,14 +64,14 @@ const Header = () => {
   )
 
   return (
-    <header className="bg-gradient-to-b from-[#f53d2d] to-[#f63] py-4">
+    <header className="bg-gradient-to-b from-[#f53d2d] to-[#f63] py-3 md:py-4">
       <div className="container mx-auto flex items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2 text-white no-underline hover:text-white">
+        <Link to="/" className="hidden md:flex items-center gap-2 text-white no-underline hover:text-white">
           <ShoppingOutlined className="text-4xl" />
           <span className="text-3xl font-bold">Shopping</span>
         </Link>
 
-        <div className="mx-8 flex-1 max-w-3xl">
+        <div className="mx-2 md:mx-8 flex-1 max-w-3xl">
           <div className="flex bg-white rounded-sm p-1">
             <Input
               className="border-none shadow-none focus:shadow-none"
@@ -76,14 +80,18 @@ const Header = () => {
               onChange={(e) => setKeyword(e.target.value)}
               onPressEnter={handleSearch}
             />
-            <Button type="primary" className="bg-[#fb5533] hover:bg-[#fb5533] border-none rounded-sm px-6" onClick={handleSearch}>
-              <SearchOutlined />
+            <Button
+              type="text"
+              className="flex items-center justify-center border-none rounded-sm px-2 text-[#fb5533] hover:bg-transparent md:bg-[#fb5533] md:hover:bg-[#fb5533] md:px-6 md:text-white md:hover:text-white shadow-none"
+              onClick={handleSearch}
+            >
+              <SearchOutlined className="text-lg" />
             </Button>
           </div>
         </div>
 
         {/* Auth Links */}
-        <div className="flex items-center gap-4 text-white">
+        <div className="flex items-center gap-2 md:gap-4 text-white">
           <Link to="/cart" className="text-white hover:text-gray-200 flex items-center">
             <Badge count={cartData?.data?.items?.length || 0} size="small" offset={[0, 0]}>
               <ShoppingCartOutlined className="text-2xl text-white" />
@@ -92,9 +100,9 @@ const Header = () => {
 
           {isAuthenticated ? (
             <Popover content={userContent} trigger="hover" placement="bottomRight">
-              <div className="flex items-center gap-2 cursor-pointer">
+              <div className="flex items-center gap-1 md:gap-2 cursor-pointer">
                 <Avatar icon={<UserOutlined />} src={user?.avatar} className="bg-gray-200 text-gray-500" />
-                <span className="font-medium">{user?.username || user?.fullName || 'User'}</span>
+                <span className="font-medium max-w-[80px] md:max-w-[120px] truncate">{user?.username || user?.fullName || 'User'}</span>
               </div>
             </Popover>
           ) : (

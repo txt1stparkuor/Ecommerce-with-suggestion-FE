@@ -5,13 +5,14 @@ import { Link } from 'react-router-dom'
 import { getUserRecommendations } from '../../apis/user.api'
 import ProductGrid from '../ProductGrid/ProductGrid'
 import useAuth from '../../hooks/useAuth'
+import { userKeys } from '@/constants/queryKeys'
 
 const { Title } = Typography
 
 const RecommendedProducts = () => {
   const { isAuthenticated } = useAuth();
   const { data, isLoading } = useQuery({
-    queryKey: ["user-recommendations", "home"],
+    queryKey: userKeys.recommendations({ view: "home", pageSize: 12, pageNum: 1 }),
     queryFn: () => getUserRecommendations({ pageSize: 12, pageNum: 1 }),
     enabled: isAuthenticated,
   });

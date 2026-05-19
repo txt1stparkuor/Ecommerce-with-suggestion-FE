@@ -3,8 +3,9 @@ export const ApiConstant = {
     login: "/auth/login",
     register: "/auth/register",
     refreshToken: "/auth/refresh-token",
+    forgotPassword: "/auth/forgot-password",
+    resetPassword: "/auth/reset-password",
     changePassword: "/auth/change-password",
-    verifyPassword: "/auth/verify-password",
   },
   categories: {
     base: "/categories",

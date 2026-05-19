@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Typography, Pagination } from 'antd'
 import { getProductRecommendationsHybrid } from '../../apis/product.api'
 import ProductGrid from '../../components/ProductGrid/ProductGrid'
+import { productKeys } from '@/constants/queryKeys'
 
 const { Title } = Typography
 
@@ -14,7 +15,7 @@ const ProductRecommendations = () => {
   const pageSize = 48
 
   const { data, isLoading } = useQuery({
-    queryKey: ['recommendations', productId, page],
+    queryKey: productKeys.recommendationsHybrid(productId, { page: page, size: pageSize }),
     queryFn: () => getProductRecommendationsHybrid(productId, { pageNum: page, pageSize }),
     enabled: !!productId,
     keepPreviousData: true,

@@ -1,6 +1,6 @@
 import { useForm, Controller } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Input, Button, Card, Typography } from 'antd'
 import { useNavigate, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -9,13 +9,14 @@ import backgroundImage from '../../assets/background.jpg'
 import { register } from '../../apis/auth.api'
 import { registerSchema } from '../../utils/registerValidation'
 import useAuth from '../../hooks/useAuth'
+import { userKeys } from '@/constants/queryKeys'
 
 const { Title, Text } = Typography
 
 const Register = () => {
   const navigate = useNavigate()
   const { saveUser } = useAuth()
-
+  const queryClient = useQueryClientt()
   const {
     control,
     handleSubmit,
@@ -36,6 +37,7 @@ const Register = () => {
       const authData = response.data
       saveUser(authData)
       toast.success('Registration successful!')
+      queryClient.removeQueries({ queryKey: userKeys.all })
       navigate('/')
     },
     onError: (error) => {

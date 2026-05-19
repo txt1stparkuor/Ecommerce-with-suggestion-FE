@@ -3,10 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, Skeleton } from "antd";
 import { getProducts } from "../../apis/product.api";
 import Product from "../Product/Product";
+import { productKeys } from "@/constants/queryKeys";
 
 const ProductList = () => {
   const { data, isLoading } = useQuery({
-    queryKey: ["products", "recommended"],
+    queryKey: productKeys.list({ type: "recommended", pageSize: 48, pageNum: 1 }),
     queryFn: () => getProducts({ pageSize: 48, pageNum: 1 }),
   });
 

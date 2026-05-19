@@ -5,6 +5,7 @@ import { Typography, Pagination, Empty } from 'antd'
 import { getUserRecommendations } from '../../apis/user.api'
 import ProductGrid from '../../components/ProductGrid/ProductGrid'
 import useAuth from '../../hooks/useAuth'
+import { userKeys } from '@/constants/queryKeys'
 
 const { Title } = Typography;
 
@@ -15,7 +16,7 @@ const UserRecommendations = () => {
   const pageSize = 48;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["user-recommendations", page],
+    queryKey: userKeys.recommendations({ page }),
     queryFn: () => getUserRecommendations({ pageNum: page, pageSize }),
     enabled: isAuthenticated,
     keepPreviousData: true,
