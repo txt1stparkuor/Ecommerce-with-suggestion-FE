@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Typography, Input, Button, Image } from 'antd'
@@ -8,12 +8,14 @@ import { cartKeys, orderKeys } from '@/constants/queryKeys'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
+import { generateIdempotencyKey } from '@/utils/helperFunction'
 
 const Checkout = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [shippingAddress, setShippingAddress] = useState('')
+  const idempotencyKeyRef = useRef(generateIdempotencyKey())
 
   const checkoutItems = location.state?.items || []
   const totalPayment = checkoutItems.reduce(
@@ -28,7 +30,10 @@ const Checkout = () => {
   }, [checkoutItems, navigate])
 
   const createOrderMutation = useMutation({
-    mutationFn: (data) => createOrder(data),
+    mutationFn: (payload) => createOrder({ 
+      data: payload, 
+      idempotencyKey: idempotencyKeyRef.current 
+    }),
     onSuccess: () => {
       toast.success('Order placed successfully')
       queryClient.invalidateQueries({ queryKey: cartKeys.all })

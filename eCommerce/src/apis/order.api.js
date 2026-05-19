@@ -2,7 +2,12 @@ import { api } from ".";
 import { ApiConstant } from "../constants/api.constant";
 
 const orderApi = () => ({
-  createOrder: async (data) => api.post(ApiConstant.orders.base, data),
+  createOrder: async ({ data, idempotencyKey }) =>
+    api.post(ApiConstant.orders.base, data, {
+      headers: {
+        "Idempotency-Key": idempotencyKey,
+      },
+    }),
   getMyOrders: async () => api.get(ApiConstant.orders.myOrders),
   getOrderById: async (orderId) => api.get(ApiConstant.orders.getById(orderId)),
   cancelOrder: async (orderId) => api.patch(ApiConstant.orders.cancel(orderId)),
