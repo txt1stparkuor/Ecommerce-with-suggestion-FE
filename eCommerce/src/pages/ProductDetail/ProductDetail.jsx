@@ -80,11 +80,11 @@ const ProductDetail = () => {
 
   const { data: recommendationsData, isLoading: isLoadingRecommendations } =
     useQuery({
-      queryKey: productKeys.recommendationsHybrid(productId, { page: 1, size: 48 }),
+      queryKey: productKeys.recommendationsHybrid(productId, { page: 1, size: 18 }),
       queryFn: () =>
         getProductRecommendationsHybrid(productId, {
           pageNum: 1,
-          pageSize: 48,
+          pageSize: 18,
         }),
       enabled: !!productId && isAuthenticated, 
     });

@@ -1,13 +1,12 @@
 import React, { useEffect, memo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Layout, Menu, InputNumber, Button, Rate, Divider, Typography } from 'antd'
+import { Menu, InputNumber, Button, Rate, Divider, Typography } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { getAllCategories } from '../../apis/category.api'
 import { priceRangeSchema } from '../../utils/filterValidation'
 
-const { Sider } = Layout
 const { Title } = Typography
 
 const FilterSidebar = memo(({ queryParams, onFilterChange, onClearFilters }) => {
@@ -41,7 +40,7 @@ const FilterSidebar = memo(({ queryParams, onFilterChange, onClearFilters }) => 
   }
 
   return (
-    <Sider theme="light" width={250} className="p-4 rounded-sm shadow-sm bg-white mr-6 self-start">
+    <div className="p-4 rounded-sm shadow-sm bg-white w-full">
       <Title level={5} className="uppercase">Categories</Title>
       <Menu
         mode="inline"
@@ -102,7 +101,7 @@ const FilterSidebar = memo(({ queryParams, onFilterChange, onClearFilters }) => 
       <Divider />
 
       <Button danger className="w-full mt-4" onClick={onClearFilters}>Delete All</Button>
-    </Sider>
+    </div>
   )
 })
 
