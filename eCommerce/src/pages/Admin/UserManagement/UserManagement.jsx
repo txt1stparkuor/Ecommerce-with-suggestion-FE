@@ -9,6 +9,7 @@ import {
   Typography,
   Tag,
   Modal,
+  Grid,
 } from "antd";
 import {
   PlusOutlined,
@@ -31,6 +32,7 @@ import { userKeys } from "@/constants/queryKeys";
 
 const { Title } = Typography;
 const { Search } = Input;
+const { useBreakpoint } = Grid;
 
 const UserManagement = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -38,6 +40,8 @@ const UserManagement = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+
+  const screens = useBreakpoint();
 
   const [searchTerm, setSearchTerm] = useState(
     searchParams.get("keyword") || ""
@@ -138,6 +142,7 @@ const UserManagement = () => {
       const res = await getUserById(id);
       Modal.info({
         title: "User Details",
+        width: screens.md ? 600 : "95%",
         maskClosable: true,
         content: (
           <div>
@@ -176,18 +181,25 @@ const UserManagement = () => {
   };
 
   const columns = [
-    { title: "Username", dataIndex: "username", key: "username", width: "20%" },
+    { 
+      title: "Username", 
+      dataIndex: "username", 
+      key: "username", 
+      width: 150 
+    },
     {
       title: "Full Name",
       dataIndex: "fullName",
       key: "fullName",
-      width: "25%",
+      width: 200,
+      ellipsis: true,
     },
-    { title: "Email", dataIndex: "email", key: "email", width: "25%" },
+    { title: "Email", dataIndex: "email", key: "email", width: 250, ellipsis: true },
     {
       title: "Roles",
       dataIndex: "roles",
       key: "roles",
+      width: 150,
       render: (roles) => (
         <>
           {roles?.map((role) => (
@@ -201,15 +213,19 @@ const UserManagement = () => {
     {
       title: "Action",
       key: "action",
+      fixed: "right",
+      width: screens.md ? 160 : 130,
       render: (_, record) => (
-        <Space size="middle">
+        <Space size={screens.md ? "middle" : "small"}>
           <Button
             icon={<EyeOutlined />}
             onClick={() => handleViewUser(record.id)}
+            size={screens.md ? "middle" : "small"}
           />
           <Button
             icon={<EditOutlined />}
             onClick={() => handleEditUser(record.id)}
+            size={screens.md ? "middle" : "small"}
           />
           <Popconfirm
             title="Delete the user"
@@ -222,6 +238,7 @@ const UserManagement = () => {
               danger
               icon={<DeleteOutlined />}
               loading={deleteMutation.isPending}
+              size={screens.md ? "middle" : "small"}
             />
           </Popconfirm>
         </Space>
@@ -230,14 +247,15 @@ const UserManagement = () => {
   ];
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <Title level={2}>User Management</Title>
+    <div className="p-2 sm:p-4 bg-white rounded-lg shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <Title level={screens.xs ? 4 : 2} style={{ margin: 0 }}>User Management</Title>
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          className="bg-[#ee4d2d]"
+          className="bg-[#ee4d2d] flex items-center"
           onClick={handleAddUser}
+          size={screens.xs ? "middle" : "large"}
         >
           Add User
         </Button>
@@ -246,10 +264,10 @@ const UserManagement = () => {
         <Search
           placeholder="Search by username, full name, email"
           allowClear
-          size="large"
+          size={screens.xs ? "middle" : "large"}
           onChange={handleSearchChange}
           value={searchTerm}
-          className="max-w-md"
+          className="w-full sm:max-w-md"
         />
       </div>
       <Table
@@ -264,6 +282,8 @@ const UserManagement = () => {
         }}
         loading={isLoading}
         onChange={handleTableChange}
+        scroll={{ x: 900 }}
+        bordered
       />
       {isModalOpen && (
         <UserForm
