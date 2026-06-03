@@ -177,6 +177,7 @@ const ProductManagement = () => {
       Modal.info({
         title: "Product Details",
         width: 600,
+        maskClosable: true,
         content: (
           <div className="mt-4 space-y-2">
             <p>

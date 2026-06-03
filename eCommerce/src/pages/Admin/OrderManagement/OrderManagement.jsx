@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Table, Typography, Tag, Button, Space, Modal, Select, Descriptions, Image, Input } from 'antd'
+import { Table, Typography, Tag, Button, Space, Modal, Select, Descriptions, Image, Input, Grid } from 'antd'
 import { useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { getAllOrders, updateOrderStatus, getOrderById } from '../../../apis/order.api'
@@ -10,6 +10,7 @@ import { orderKeys } from '@/constants/queryKeys'
 
 const { Title, Text } = Typography
 const { Search } = Input
+const { useBreakpoint } = Grid
 
 const OrderManagement = () => {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -21,6 +22,8 @@ const OrderManagement = () => {
 
   const [searchTerm, setSearchTerm] = useState(searchParams.get('keyword') || '')
   const debouncedSearchTerm = useDebounce(searchTerm, 500)
+
+  const screens = useBreakpoint()
 
   const keyword = searchParams.get('keyword') || ''
   const page = Number(searchParams.get('page')) || 1
@@ -93,7 +96,8 @@ const OrderManagement = () => {
       const order = res.data
       Modal.info({
         title: 'Order Details',
-        width: '70%',
+        width: screens.md ? '70%' : '95%',
+        maskClosable: true,
         content: (
           <div className="mt-4">
             <Descriptions bordered column={1} size="small">
@@ -147,18 +151,45 @@ const OrderManagement = () => {
   }
 
   const columns = [
-    { title: 'Order Code', dataIndex: 'orderCode', key: 'orderCode' },
-    { title: 'Date', dataIndex: 'createdAt', key: 'createdAt', render: (date) => new Date(date).toLocaleDateString() },
-    { title: 'Total Amount', dataIndex: 'totalAmount', key: 'totalAmount', render: (amount) => `₹${amount.toLocaleString()}` },
+    { 
+      title: 'Order Code', 
+      dataIndex: 'orderCode', 
+      key: 'orderCode',
+      width: 150,
+    },
+    { 
+      title: 'Date', 
+      dataIndex: 'createdAt', 
+      key: 'createdAt', 
+      render: (date) => new Date(date).toLocaleDateString(),
+      width: 120,
+    },
+    { 
+      title: 'Total Amount', 
+      dataIndex: 'totalAmount', 
+      key: 'totalAmount', 
+      render: (amount) => `₹${amount.toLocaleString()}`,
+      width: 130,
+    },
     { title: 'Status', dataIndex: 'status', key: 'status', render: (status) => <Tag color={getStatusTagColor(status)}>{status}</Tag> },
     { title: 'Shipping Address', dataIndex: 'shippingAddress', key: 'shippingAddress', ellipsis: true },
     {
       title: 'Action',
       key: 'action',
+      fixed: 'right',
+      width: screens.md ? 120 : 100,
       render: (_, record) => (
-        <Space size="middle">
-          <Button icon={<EyeOutlined />} onClick={() => handleViewDetails(record.id)} />
-          <Button icon={<EditOutlined />} onClick={() => handleOpenUpdateModal(record)} />
+        <Space size={screens.md ? "middle" : "small"}>
+          <Button 
+            icon={<EyeOutlined />} 
+            onClick={() => handleViewDetails(record.id)} 
+            size={screens.md ? "middle" : "small"}
+          />
+          <Button 
+            icon={<EditOutlined />} 
+            onClick={() => handleOpenUpdateModal(record)} 
+            size={screens.md ? "middle" : "small"}
+          />
         </Space>
       ),
     },
@@ -167,16 +198,16 @@ const OrderManagement = () => {
   const orderStatuses = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']
 
   return (
-    <div>
-      <Title level={2}>Order Management</Title>
+    <div className="p-2 sm:p-4 bg-white rounded-lg shadow-sm">
+      <Title level={screens.xs ? 4 : 2} style={{ margin: 0 }} className="mb-4">Order Management</Title>
       <div className="mb-4">
         <Search
           placeholder="Search by order code"
           allowClear
-          size="large"
+          size={screens.xs ? "middle" : "large"}
           onChange={handleSearchChange}
           value={searchTerm}
-          className="max-w-md"
+          className="w-full sm:max-w-md"
         />
       </div>
       <Table
@@ -186,7 +217,9 @@ const OrderManagement = () => {
         pagination={{ current: page, pageSize, total: ordersData?.data?.meta?.totalElements || 0, showSizeChanger: false }}
         loading={isLoading}
         onChange={handleTableChange}
+        scroll={{ x: 900 }}
         className="mt-4"
+        bordered
       />
       <Modal title="Update Order Status" open={isUpdateModalOpen} onOk={handleUpdateStatus} onCancel={handleCancelUpdateModal} confirmLoading={updateStatusMutation.isPending}>
         {selectedOrder && (
