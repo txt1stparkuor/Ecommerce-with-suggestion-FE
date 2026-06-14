@@ -1,3 +1,37 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --swiper-theme-color: #ee4d2d !important;
+  --swiper-navigation-size: 32px !important;
+  --swiper-navigation-sides-offset: 4px !important;
+}
+.swiper-button-prev,
+.swiper-button-next {
+  border-radius: 50%; /* Hình tròn */
+  box-shadow:
+    rgba(0, 0, 0, 0.2) 0px 3px 5px -1px,
+    rgba(0, 0, 0, 0.14) 0px 6px 10px 0px,
+    rgba(0, 0, 0, 0.12) 0px 1px 18px 0px;
+  background-color: #fff;
+  transition: 0.25s all;
+  padding: 4px;
+}
+
+.swiper-button-prev:hover,
+.swiper-button-next:hover {
+  background-color: #f3f4f6;
+}
+.swiper-button-prev svg,
+.swiper-button-next svg {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+.swiper-button-prev svg {
+    margin-right: 2px;
+}
+.swiper-button-next svg {
+    margin-left: 2px;
+}

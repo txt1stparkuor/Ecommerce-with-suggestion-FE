@@ -17,10 +17,20 @@ export const userSchema = (isEditing = false) =>
           .string()
           .transform((value) => (!value ? undefined : value))
           .min(6, "Password must be at least 6 characters")
+          .max(100, "Password cannot exceed 100 characters")
+          .matches(
+            /^(?=.*[A-Za-z])(?=.*\d).*$/,
+            "Password must contain at least one letter and one number",
+          )
       : yup
           .string()
-          .required("Password is required")
-          .min(6, "Password must be at least 6 characters"),
+          .required("New password is required")
+          .min(6, "Password must be at least 6 characters long")
+          .max(100, "Password cannot exceed 100 characters")
+          .matches(
+            /^(?=.*[A-Za-z])(?=.*\d).*$/,
+            "Password must contain at least one letter and one number",
+          ),
     role: yup.string().required("Role is required"),
   });
 

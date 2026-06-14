@@ -45,7 +45,7 @@ const OrderManagement = () => {
 
   const keyword = searchParams.get("keyword") || "";
   const page = Number(searchParams.get("page")) || 1;
-  const pageSize = 10;
+  const pageSize = 6;
 
   useEffect(() => {
     if (debouncedSearchTerm !== keyword) {
@@ -260,7 +260,7 @@ const OrderManagement = () => {
 
   return (
     <div className="p-2 sm:p-4 bg-white rounded-lg shadow-sm">
-      <Title level={screens.xs ? 4 : 2} style={{ margin: 0 }} className="mb-4">
+      <Title level={screens.xs ? 4 : 2} style={{ margin: 0 }} className="!mb-4">
         Order Management
       </Title>
       <div className="mb-4">

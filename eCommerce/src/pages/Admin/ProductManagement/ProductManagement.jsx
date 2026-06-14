@@ -313,7 +313,7 @@ const ProductManagement = () => {
 
   return (
     <div className="p-2 sm:p-4 bg-white rounded-lg shadow-sm">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
         <Title level={screens.xs ? 4 : 2} style={{ margin: 0 }}>
           Product Management
         </Title>
@@ -340,7 +340,7 @@ const ProductManagement = () => {
         </Space>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-4">
         <Search
           placeholder="Search by product name..."
           allowClear
