@@ -136,13 +136,17 @@ const ProductDetail = () => {
   const reviews = reviewsData?.data?.items || [];
   const totalReviews = reviewsData?.data?.meta?.totalElements || 0;
   const recommendations = recommendationsData?.data?.items || [];
-
   if (isLoading) {
     return (
       <div className="container mx-auto py-8 px-4 bg-white mt-4 rounded-sm shadow-sm">
         <div className="flex flex-col md:flex-row gap-8">
           <div className="w-full md:w-[35%]">
-            <Skeleton.Image active className="!w-full !h-[400px]" />
+            <div className="relative w-full pt-[100%] overflow-hidden border border-gray-200 rounded-md">
+              <Skeleton.Image
+                active
+                className="absolute top-0 left-0 !w-full !h-full [&_.ant-skeleton-image]:!w-full [&_.ant-skeleton-image]:!h-full"
+              />
+            </div>
           </div>
           <div className="w-full md:w-[65%] space-y-4">
             <Skeleton active paragraph={{ rows: 6 }} />
