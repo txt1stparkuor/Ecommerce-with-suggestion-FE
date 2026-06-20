@@ -80,13 +80,16 @@ const ProductDetail = () => {
 
   const { data: recommendationsData, isLoading: isLoadingRecommendations } =
     useQuery({
-      queryKey: productKeys.recommendationsHybrid(productId, { page: 1, size: 18 }),
+      queryKey: productKeys.recommendationsHybrid(productId, {
+        page: 1,
+        size: 18,
+      }),
       queryFn: () =>
         getProductRecommendationsHybrid(productId, {
           pageNum: 1,
           pageSize: 18,
         }),
-      enabled: !!productId && isAuthenticated, 
+      enabled: !!productId && isAuthenticated,
     });
 
   const addToCartMutation = useMutation({
@@ -94,6 +97,11 @@ const ProductDetail = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: cartKeys.all });
       toast.success("Added to cart");
+    },
+    onError: (error) => {
+      toast.error(
+        error.response?.data?.message || "Failed to add the product to cart",
+      );
     },
   });
 
@@ -103,8 +111,12 @@ const ProductDetail = () => {
       toast.success("Review submitted successfully");
       setIsReviewModalOpen(false);
       reset();
-      queryClient.invalidateQueries({ queryKey: productKeys.reviews(productId) });
-      queryClient.invalidateQueries({ queryKey: productKeys.detail(productId) });
+      queryClient.invalidateQueries({
+        queryKey: productKeys.reviews(productId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: productKeys.detail(productId),
+      });
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || "Failed to submit review");
@@ -164,7 +176,10 @@ const ProductDetail = () => {
 
         {/* Right Side - Details */}
         <div className="w-full md:w-[65%] flex flex-col gap-3 md:gap-4">
-          <Title level={3} className="!mb-0 font-medium !text-lg md:!text-xl lg:!text-2xl">
+          <Title
+            level={3}
+            className="!mb-0 font-medium !text-lg md:!text-xl lg:!text-2xl"
+          >
             {product.name}
           </Title>
 
@@ -247,7 +262,9 @@ const ProductDetail = () => {
       </div>
 
       <div className="mt-6 md:mt-8 border-t pt-4">
-        <Title level={4} className="text-lg md:text-xl">Product Description</Title>
+        <Title level={4} className="text-lg md:text-xl">
+          Product Description
+        </Title>
         <Paragraph className="whitespace-pre-line text-gray-600 text-base md:text-lg">
           {product.description?.replace(/\|/g, "\n✔️ ")}
         </Paragraph>
@@ -276,8 +293,13 @@ const ProductDetail = () => {
                   className="border-b border-gray-100 pb-6 last:border-0"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <Avatar icon={<UserOutlined />} size={screens.md ? "middle" : "small"} />
-                    <Text strong className="text-sm md:text-base">{review.userFullName}</Text>
+                    <Avatar
+                      icon={<UserOutlined />}
+                      size={screens.md ? "middle" : "small"}
+                    />
+                    <Text strong className="text-sm md:text-base">
+                      {review.userFullName}
+                    </Text>
                   </div>
                   <div className="flex items-center gap-2 mb-2">
                     <Rate

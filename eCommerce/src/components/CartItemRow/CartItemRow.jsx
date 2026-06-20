@@ -57,12 +57,16 @@ const CartItemRow = ({ item, isSelected, onSelect, onDelete }) => {
       <div className="col-span-12 md:col-span-6 flex items-center gap-2 md:gap-4">
         <Checkbox checked={isSelected} onChange={() => onSelect(item.id)} />
         <div className="flex items-center gap-3 md:gap-4">
-          <Image
-            src={item.productImageUrl}
-            alt={item.productName}
-            width={screens.md ? 240 : 200}
-            className="object-cover border border-gray-200"
-          />
+          <div className="w-20 h-20 md:w-32 md:h-32 flex-shrink-0 overflow-hidden border border-gray-200 rounded-sm">
+            <Image
+              src={item.productImageUrl}
+              alt={item.productName}
+              width="100%"
+              height="100%"
+              preview={false}
+              className="[&_img]:object-cover"
+            />
+          </div>
           <Link
             to={`/products/${item.productId}`}
             className="text-gray-800 hover:text-[#ee4d2d] line-clamp-1 sm:line-clamp-2"
@@ -85,7 +89,7 @@ const CartItemRow = ({ item, isSelected, onSelect, onDelete }) => {
       <div className="col-span-2 md:col-span-2 flex justify-center">
         <InputNumber
           min={1}
-          max={item.stockQuantity} 
+          max={item.stockQuantity}
           size={screens.md ? "middle" : "small"}
           value={localQuantity}
           onChange={handleQuantityChange}
