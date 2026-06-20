@@ -44,7 +44,7 @@ const UserManagement = () => {
   const screens = useBreakpoint();
 
   const [searchTerm, setSearchTerm] = useState(
-    searchParams.get("keyword") || ""
+    searchParams.get("keyword") || "",
   );
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
@@ -87,10 +87,13 @@ const UserManagement = () => {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, body }) => updateUser(id, body),
-    onSuccess: () => {
+    // FIX: Extracted `variables` parameter which contains `{ id, body }`
+    onSuccess: (data, variables) => {
       toast.success("User updated successfully");
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: userKeys.detail(id) });
+      queryClient.invalidateQueries({
+        queryKey: userKeys.detail(variables.id),
+      }); // Use variables.id here
       setIsModalOpen(false);
       setEditingUser(null);
     },
@@ -101,10 +104,11 @@ const UserManagement = () => {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => deleteUser(id),
-    onSuccess: () => {
+    // FIX: Extracted the `id` argument as the second parameter here
+    onSuccess: (data, id) => {
       toast.success("User deleted successfully");
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: userKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(id) }); // Use the provided id here
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || "Failed to delete user");
@@ -181,11 +185,11 @@ const UserManagement = () => {
   };
 
   const columns = [
-    { 
-      title: "Username", 
-      dataIndex: "username", 
-      key: "username", 
-      width: 150 
+    {
+      title: "Username",
+      dataIndex: "username",
+      key: "username",
+      width: 150,
     },
     {
       title: "Full Name",
@@ -194,7 +198,13 @@ const UserManagement = () => {
       width: 200,
       ellipsis: true,
     },
-    { title: "Email", dataIndex: "email", key: "email", width: 250, ellipsis: true },
+    {
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
+      width: 250,
+      ellipsis: true,
+    },
     {
       title: "Roles",
       dataIndex: "roles",
@@ -249,7 +259,9 @@ const UserManagement = () => {
   return (
     <div className="p-2 sm:p-4 bg-white rounded-lg shadow-sm">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-        <Title level={screens.xs ? 4 : 2} style={{ margin: 0 }}>User Management</Title>
+        <Title level={screens.xs ? 4 : 2} style={{ margin: 0 }}>
+          User Management
+        </Title>
         <Button
           type="primary"
           icon={<PlusOutlined />}
