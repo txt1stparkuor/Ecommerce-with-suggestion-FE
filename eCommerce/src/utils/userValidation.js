@@ -1,6 +1,6 @@
 import * as yup from "yup";
 
-export const userSchema = (isEditing = false) =>
+export const userSchema = () =>
   yup.object({
     username: yup
       .string()
@@ -12,15 +12,6 @@ export const userSchema = (isEditing = false) =>
       .email("Invalid email format")
       .required("Email is required"),
     fullName: yup.string().required("Full name is required"),
-    password: isEditing
-      ? yup
-          .string()
-          .transform((value) => (!value ? undefined : value))
-          .min(6, "Password must be at least 6 characters")
-      : yup
-          .string()
-          .required("Password is required")
-          .min(6, "Password must be at least 6 characters"),
     role: yup.string().required("Role is required"),
   });
 

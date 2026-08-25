@@ -1,4 +1,4 @@
-import React from 'react'
+import React from "react";
 import UserLayout from "../layouts/UserLayout";
 import Home from "../pages/Home/Home";
 import ProductsPage from "../pages/ProductsPage/ProductsPage";
@@ -14,70 +14,76 @@ import UserRecommendations from "../pages/UserRecommendations/UserRecommendation
 import MyAccount from "../pages/MyAccount/MyAccount";
 import Profile from "../pages/Profile/Profile";
 import ChangePassword from "../pages/ChangePassword/ChangePassword";
+import BlockAdminRoute from "@/components/BlockAdminRoute/BlockAdminRoute";
 
 const userRoutes = [
   {
-    path: "/",
-    element: <UserLayout />,
+    element: <BlockAdminRoute />,
     children: [
       {
-        index: true,
-        element: <Home />,
-      },
-      {
-        path: "products",
-        element: <ProductsPage />,
-      },
-      {
-        path: "products/:productId/similar",
-        element: <SimilarProducts />,
-      },
-      {
-        path: "products/:productId",
-        element: <ProductDetail />,
-      },
-      {
-        path: "products/:productId/recommendations",
-        element: <ProductRecommendations />,
-      },
-      {
-        element: <ProtectedRoute />,
+        path: "/",
+        element: <UserLayout />,
         children: [
           {
-            path: "cart",
-            element: <Cart />,
+            index: true,
+            element: <Home />,
           },
           {
-            path: "recommendations",
-            element: <UserRecommendations />,
+            path: "products",
+            element: <ProductsPage />,
           },
           {
-            path: "checkout",
-            element: <Checkout />,
+            path: "products/:productId/similar",
+            element: <SimilarProducts />,
           },
           {
-            path: "my-orders",
-            element: <OrderHistory />,
+            path: "products/:productId",
+            element: <ProductDetail />,
           },
           {
-            path: "orders/:orderId",
-            element: <OrderDetail />,
+            path: "products/:productId/recommendations",
+            element: <ProductRecommendations />,
           },
           {
-            path: "user/account",
-            element: <MyAccount />,
+            element: <ProtectedRoute roles={["USER"]} />,
             children: [
               {
-                path: "profile",
-                element: <Profile />,
+                path: "cart",
+                element: <Cart />,
               },
               {
-                path: "password",
-                element: <ChangePassword />,
+                path: "recommendations",
+                element: <UserRecommendations />,
+              },
+              {
+                path: "checkout",
+                element: <Checkout />,
+              },
+              {
+                path: "my-orders",
+                element: <OrderHistory />,
+              },
+              {
+                path: "orders/:orderId",
+                element: <OrderDetail />,
+              },
+              {
+                path: "user/account",
+                element: <MyAccount />,
+                children: [
+                  {
+                    path: "profile",
+                    element: <Profile />,
+                  },
+                  {
+                    path: "password",
+                    element: <ChangePassword />,
+                  },
+                ],
               },
             ],
           },
-        ]
+        ],
       },
     ],
   },

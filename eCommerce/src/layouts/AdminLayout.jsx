@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Layout, Menu, Button, theme, Avatar, Dropdown, Space } from "antd";
+import { Layout, Menu, Button, theme, Avatar, Dropdown, Space, Grid } from "antd";
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -14,6 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { userKeys } from "@/constants/queryKeys";
 
 const { Header, Sider, Content } = Layout;
+const { useBreakpoint } = Grid;
 
 const AdminLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -24,6 +25,7 @@ const AdminLayout = () => {
   } = theme.useToken();
   const navigate = useNavigate();
   const location = useLocation();
+  const screens = useBreakpoint();
 
   const handleLogout = () => {
     clearUser();
@@ -66,6 +68,9 @@ const AdminLayout = () => {
         trigger={null}
         collapsible
         collapsed={collapsed}
+        breakpoint="lg"
+        collapsedWidth={screens.xs ? 0 : 80}
+        onCollapse={(value) => setCollapsed(value)}
         theme="light"
         className="shadow-md z-10"
       >
@@ -95,6 +100,7 @@ const AdminLayout = () => {
           style={{
             padding: 0,
             background: colorBgContainer,
+            height: screens.xs ? 56 : 64,
           }}
           className="flex justify-between items-center px-4 shadow-sm z-10"
         >
@@ -103,24 +109,24 @@ const AdminLayout = () => {
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => setCollapsed(!collapsed)}
             style={{
-              fontSize: "16px",
-              width: 64,
-              height: 64,
+              fontSize: screens.xs ? "14px" : "16px",
+              width: screens.xs ? 56 : 64,
+              height: screens.xs ? 56 : 64,
             }}
           />
           <div className="mr-4">
             <Dropdown menu={userMenu} placement="bottomRight">
               <Space className="cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors">
                 <Avatar icon={<UserOutlined />} className="bg-[#ee4d2d]" />
-                <span className="font-medium">Admin</span>
+                {!screens.xs && <span className="font-medium">Admin</span>}
               </Space>
             </Dropdown>
           </div>
         </Header>
         <Content
           style={{
-            margin: "24px 16px",
-            padding: 24,
+            margin: screens.xs ? "12px 8px" : "24px 16px",
+            padding: screens.xs ? 16 : 24,
             minHeight: 280,
             background: colorBgContainer,
             borderRadius: borderRadiusLG,

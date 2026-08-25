@@ -9,6 +9,7 @@ import {
   Typography,
   Tag,
   Modal,
+  Grid,
 } from "antd";
 import {
   PlusOutlined,
@@ -31,6 +32,7 @@ import { userKeys } from "@/constants/queryKeys";
 
 const { Title } = Typography;
 const { Search } = Input;
+const { useBreakpoint } = Grid;
 
 const UserManagement = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -39,14 +41,16 @@ const UserManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
 
+  const screens = useBreakpoint();
+
   const [searchTerm, setSearchTerm] = useState(
-    searchParams.get("keyword") || ""
+    searchParams.get("keyword") || "",
   );
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   const keyword = searchParams.get("keyword") || "";
   const page = Number(searchParams.get("page")) || 1;
-  const pageSize = 6;
+  const pageSize = 5;
 
   useEffect(() => {
     if (debouncedSearchTerm !== keyword) {
@@ -83,10 +87,13 @@ const UserManagement = () => {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, body }) => updateUser(id, body),
-    onSuccess: () => {
+    // FIX: Extracted `variables` parameter which contains `{ id, body }`
+    onSuccess: (data, variables) => {
       toast.success("User updated successfully");
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: userKeys.detail(id) });
+      queryClient.invalidateQueries({
+        queryKey: userKeys.detail(variables.id),
+      }); // Use variables.id here
       setIsModalOpen(false);
       setEditingUser(null);
     },
@@ -97,10 +104,11 @@ const UserManagement = () => {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => deleteUser(id),
-    onSuccess: () => {
+    // FIX: Extracted the `id` argument as the second parameter here
+    onSuccess: (data, id) => {
       toast.success("User deleted successfully");
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: userKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(id) }); // Use the provided id here
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || "Failed to delete user");
@@ -138,6 +146,7 @@ const UserManagement = () => {
       const res = await getUserById(id);
       Modal.info({
         title: "User Details",
+        width: screens.md ? 600 : "95%",
         maskClosable: true,
         content: (
           <div>
@@ -176,18 +185,31 @@ const UserManagement = () => {
   };
 
   const columns = [
-    { title: "Username", dataIndex: "username", key: "username", width: "20%" },
+    {
+      title: "Username",
+      dataIndex: "username",
+      key: "username",
+      width: 150,
+    },
     {
       title: "Full Name",
       dataIndex: "fullName",
       key: "fullName",
-      width: "25%",
+      width: 200,
+      ellipsis: true,
     },
-    { title: "Email", dataIndex: "email", key: "email", width: "25%" },
+    {
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
+      width: 250,
+      ellipsis: true,
+    },
     {
       title: "Roles",
       dataIndex: "roles",
       key: "roles",
+      width: 150,
       render: (roles) => (
         <>
           {roles?.map((role) => (
@@ -201,15 +223,19 @@ const UserManagement = () => {
     {
       title: "Action",
       key: "action",
+      fixed: "right",
+      width: screens.md ? 160 : 130,
       render: (_, record) => (
-        <Space size="middle">
+        <Space size={screens.md ? "middle" : "small"}>
           <Button
             icon={<EyeOutlined />}
             onClick={() => handleViewUser(record.id)}
+            size={screens.md ? "middle" : "small"}
           />
           <Button
             icon={<EditOutlined />}
             onClick={() => handleEditUser(record.id)}
+            size={screens.md ? "middle" : "small"}
           />
           <Popconfirm
             title="Delete the user"
@@ -222,6 +248,7 @@ const UserManagement = () => {
               danger
               icon={<DeleteOutlined />}
               loading={deleteMutation.isPending}
+              size={screens.md ? "middle" : "small"}
             />
           </Popconfirm>
         </Space>
@@ -230,14 +257,17 @@ const UserManagement = () => {
   ];
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <Title level={2}>User Management</Title>
+    <div className="p-2 sm:p-4 bg-white rounded-lg shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <Title level={screens.xs ? 4 : 2} style={{ margin: 0 }}>
+          User Management
+        </Title>
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          className="bg-[#ee4d2d]"
+          className="bg-[#ee4d2d] flex items-center"
           onClick={handleAddUser}
+          size={screens.xs ? "middle" : "large"}
         >
           Add User
         </Button>
@@ -246,10 +276,10 @@ const UserManagement = () => {
         <Search
           placeholder="Search by username, full name, email"
           allowClear
-          size="large"
+          size={screens.xs ? "middle" : "large"}
           onChange={handleSearchChange}
           value={searchTerm}
-          className="max-w-md"
+          className="w-full sm:max-w-md"
         />
       </div>
       <Table
@@ -264,6 +294,8 @@ const UserManagement = () => {
         }}
         loading={isLoading}
         onChange={handleTableChange}
+        scroll={{ x: 900 }}
+        bordered
       />
       {isModalOpen && (
         <UserForm

@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Modal, Form, Input, Button, Select } from "antd";
+import { Modal, Form, Input, Button, Select, Alert } from "antd";
 import { userSchema } from "../../utils/userValidation";
 
 const UserForm = ({ open, onCancel, onSubmit, initialValues, loading }) => {
@@ -12,7 +12,7 @@ const UserForm = ({ open, onCancel, onSubmit, initialValues, loading }) => {
     reset,
     formState: { errors },
   } = useForm({
-    resolver: yupResolver(userSchema(isEditing)),
+    resolver: yupResolver(userSchema()),
     defaultValues: initialValues
       ? {
           ...initialValues,
@@ -21,7 +21,7 @@ const UserForm = ({ open, onCancel, onSubmit, initialValues, loading }) => {
             (initialValues.roles && initialValues.roles[0]) ||
             "USER",
         }
-      : { username: "", email: "", fullName: "", password: "", role: "USER" },
+      : { username: "", email: "", fullName: "", role: "USER" },
   });
 
   useEffect(() => {
@@ -39,7 +39,6 @@ const UserForm = ({ open, onCancel, onSubmit, initialValues, loading }) => {
           username: "",
           email: "",
           fullName: "",
-          password: "",
           role: "USER",
         });
       }
@@ -47,10 +46,15 @@ const UserForm = ({ open, onCancel, onSubmit, initialValues, loading }) => {
   }, [initialValues, open, reset]);
 
   const handleFormSubmit = (data) => {
-    if (isEditing && !data.password) {
-      delete data.password;
+    const payload = { ...data };
+
+    if (!isEditing) {
+      payload.password = "svHAUI2026";
+    } else {
+      delete payload.password;
     }
-    onSubmit(data);
+
+    onSubmit(payload);
   };
 
   return (
@@ -59,7 +63,7 @@ const UserForm = ({ open, onCancel, onSubmit, initialValues, loading }) => {
       title={isEditing ? "Edit User" : "Add User"}
       onCancel={onCancel}
       destroyOnHidden
-      styles={{footer: {marginTop: '2rem'}}}
+      styles={{ footer: { marginTop: "2rem" } }}
       footer={[
         <Button key="back" onClick={onCancel}>
           Cancel
@@ -113,25 +117,6 @@ const UserForm = ({ open, onCancel, onSubmit, initialValues, loading }) => {
           />
         </Form.Item>
         <Form.Item
-          label="Password"
-          required={!isEditing}
-          validateStatus={errors.password ? "error" : ""}
-          help={errors.password?.message}
-        >
-          <Controller
-            name="password"
-            control={control}
-            render={({ field }) => (
-              <Input.Password
-                {...field}
-                placeholder={
-                  isEditing ? "Leave blank to keep current password" : ""
-                }
-              />
-            )}
-          />
-        </Form.Item>
-        <Form.Item
           label="Role"
           required
           validateStatus={errors.role ? "error" : ""}
@@ -152,6 +137,13 @@ const UserForm = ({ open, onCancel, onSubmit, initialValues, loading }) => {
           />
         </Form.Item>
       </Form>
+      {!isEditing && (
+        <Alert
+          title="Note: The default password for new users is svHAUI2026."
+          type="info"
+          showIcon
+        />
+      )}
     </Modal>
   );
 };

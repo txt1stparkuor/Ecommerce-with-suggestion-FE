@@ -16,7 +16,7 @@ const { Title, Text } = Typography
 const Register = () => {
   const navigate = useNavigate()
   const { saveUser } = useAuth()
-  const queryClient = useQueryClientt()
+  const queryClient = useQueryClient()
   const {
     control,
     handleSubmit,

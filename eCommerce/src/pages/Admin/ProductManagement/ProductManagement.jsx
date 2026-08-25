@@ -9,6 +9,7 @@ import {
   Typography,
   Image,
   Modal,
+  Grid,
 } from "antd";
 import {
   PlusOutlined,
@@ -33,6 +34,7 @@ import { productKeys } from "@/constants/queryKeys";
 
 const { Title } = Typography;
 const { Search } = Input;
+const { useBreakpoint } = Grid;
 
 const ProductManagement = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -45,6 +47,8 @@ const ProductManagement = () => {
     searchParams.get("keyword") || ""
   );
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  const screens = useBreakpoint();
 
   const keyword = searchParams.get("keyword") || "";
   const page = Number(searchParams.get("page")) || 1;
@@ -173,6 +177,7 @@ const ProductManagement = () => {
       Modal.info({
         title: "Product Details",
         width: 600,
+        maskClosable: true,
         content: (
           <div className="mt-4 space-y-2">
             <p>
@@ -232,8 +237,8 @@ const ProductManagement = () => {
       key: "image",
       render: (imageUrl) => (
         <Image
-          width={60}
-          height={60}
+          width={screens.md ? 60 : 45}
+          height={screens.md ? 60 : 45}
           src={imageUrl || "https://via.placeholder.com/150"}
           alt="product"
           className="rounded shadow-sm"
@@ -270,17 +275,21 @@ const ProductManagement = () => {
     {
       title: "Action",
       key: "action",
+      fixed: "right",
+      width: screens.md ? 160 : 130,
       render: (_, record) => (
-        <Space size="middle">
+        <Space size={screens.md ? "middle" : "small"}>
           <Button
             icon={<EyeOutlined />}
             onClick={() => handleViewProduct(record.id)}
             title="View Details"
+            size={screens.md ? "middle" : "small"}
           />
           <Button
             icon={<EditOutlined />}
             onClick={() => handleEditProduct(record.id)}
             title="Edit Product"
+            size={screens.md ? "middle" : "small"}
           />
           <Popconfirm
             title="Delete the product"
@@ -294,6 +303,7 @@ const ProductManagement = () => {
               icon={<DeleteOutlined />}
               loading={deleteMutation.isPending}
               title="Delete Product"
+              size={screens.md ? "middle" : "small"}
             />
           </Popconfirm>
         </Space>
@@ -302,12 +312,12 @@ const ProductManagement = () => {
   ];
 
   return (
-    <div className="p-4 bg-white rounded-lg shadow-sm">
-      <div className="flex justify-between items-center mb-6">
-        <Title level={2} style={{ margin: 0 }}>
+    <div className="p-2 sm:p-4 bg-white rounded-lg shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <Title level={screens.xs ? 4 : 2} style={{ margin: 0 }}>
           Product Management
         </Title>
-        <Space size="small">
+        <Space size="small" wrap className="w-full sm:w-auto">
           {/* NÚT EXPORT CHO AI */}
           <Button
             icon={<DownloadOutlined />}
@@ -330,14 +340,14 @@ const ProductManagement = () => {
         </Space>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-4">
         <Search
           placeholder="Search by product name..."
           allowClear
-          size="large"
+          size={screens.xs ? "middle" : "large"}
           onChange={handleSearchChange}
           value={searchTerm}
-          className="max-w-md"
+          className="w-full sm:max-w-md"
         />
       </div>
 
@@ -353,6 +363,7 @@ const ProductManagement = () => {
         }}
         loading={isLoading}
         onChange={handleTableChange}
+        scroll={{ x: 800 }}
         bordered
       />
 
