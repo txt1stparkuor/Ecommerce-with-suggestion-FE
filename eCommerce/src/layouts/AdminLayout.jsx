@@ -7,6 +7,7 @@ import {
   ShoppingOutlined,
   OrderedListOutlined,
   LogoutOutlined,
+  DashboardOutlined,
 } from "@ant-design/icons";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
@@ -34,6 +35,11 @@ const AdminLayout = () => {
   }
 
   const menuItems = [
+    {
+      key: "/admin/analytics",
+      icon: <DashboardOutlined />,
+      label: "Analytics",
+    },
     {
       key: "/admin/products",
       icon: <ShoppingOutlined />,
