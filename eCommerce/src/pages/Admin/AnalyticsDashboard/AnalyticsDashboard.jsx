@@ -1,13 +1,114 @@
 import React, { useState } from "react";
-import { DatePicker } from "antd";
+import { DatePicker, Skeleton } from "antd";
 import { CalendarOutlined, ArrowRightOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
+import {
+  getSalesSummary,
+  getPendingOrdersCount,
+} from "../../../apis/analytics.api";
+import { analyticsKeys } from "@/constants/queryKeys";
 import SalesTrendChart from "./widgets/SalesTrendChart";
 import TopProductsLeaderboard from "./widgets/TopProductsLeaderboard";
 import LowStockAlertTable from "./widgets/LowStockAlertTable";
 
 const { RangePicker } = DatePicker;
+
+// Trending Arrow SVG icons matching reference design
+const TrendUpIcon = () => (
+  <svg
+    className="w-3.5 h-3.5 stroke-current"
+    viewBox="0 0 24 24"
+    fill="none"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+    <polyline points="17 6 23 6 23 12" />
+  </svg>
+);
+
+const TrendDownIcon = () => (
+  <svg
+    className="w-3.5 h-3.5 stroke-current"
+    viewBox="0 0 24 24"
+    fill="none"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
+    <polyline points="17 18 23 18 23 12" />
+  </svg>
+);
+
+// Format number with commas (e.g. 125430 → "125,430")
+const formatNumber = (num) =>
+  num != null ? num.toLocaleString("en-US") : "—";
+
+// Format currency (e.g. 125430.5 → "$125,430.50")
+const formatCurrency = (num) =>
+  num != null
+    ? `$${num.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`
+    : "—";
+
+// Reusable KPI card skeleton matching card layout
+const KpiSkeleton = () => (
+  <div className="bg-white p-6 rounded-xl border border-gray-200/80 shadow-sm flex flex-col">
+    <Skeleton.Input active size="small" className="!w-28 !h-4" />
+    <Skeleton.Input active size="large" className="!w-36 !h-10 mt-2" />
+    <div className="flex-1 my-3" />
+    <div className="flex items-center gap-2">
+      <Skeleton.Input active size="small" className="!w-16 !h-5" />
+      <Skeleton.Input active size="small" className="!w-24 !h-4" />
+    </div>
+  </div>
+);
+
+// Helper to render trend badge with percentage or delta
+const renderTrendBadge = (value, isCurrency = false) => {
+  if (value == null || isNaN(value)) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-gray-100 text-gray-500">
+        —
+      </span>
+    );
+  }
+
+  const isPositive = value > 0;
+  const isNegative = value < 0;
+
+  let formattedVal;
+  if (isCurrency) {
+    formattedVal = `${isPositive ? "+" : isNegative ? "-" : ""}$${Math.abs(value).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  } else {
+    formattedVal = `${isPositive ? "+" : ""}${Number(value.toFixed(2))}%`;
+  }
+
+  const colorClass = isPositive
+    ? "bg-emerald-50 text-emerald-600"
+    : isNegative
+    ? "bg-rose-50 text-rose-600"
+    : "bg-gray-100 text-gray-600";
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold ${colorClass}`}
+    >
+      {isPositive && <TrendUpIcon />}
+      {isNegative && <TrendDownIcon />}
+      {formattedVal}
+    </span>
+  );
+};
 
 const AnalyticsDashboard = () => {
   const navigate = useNavigate();
@@ -66,32 +167,51 @@ const AnalyticsDashboard = () => {
     }
   };
 
-  // Dynamic comparison label based on active tab
+  // Format date range to YYYY-MM-DD for API params
+  const dateParams = {
+    from: dateRange[0].format("YYYY-MM-DD"),
+    to: dateRange[1].format("YYYY-MM-DD"),
+  };
+
+  // ─── Widget 1: Sales Summary KPI Cards ────────────────────────────────
+  // API: GET /api/v1/analytics/sales/summary?from=...&to=...
+  const { data: salesData, isLoading: isSalesLoading } = useQuery({
+    queryKey: analyticsKeys.salesSummary(dateParams),
+    queryFn: () => getSalesSummary(dateParams),
+  });
+
+  const salesSummary = salesData?.data;
+  const current = salesSummary?.current;
+  const change = salesSummary?.change;
+
+  // ─── Widget 2: Pending Orders Count (independent) ─────────────────────
+  // API: GET /api/v1/analytics/orders/pending-count
+  const { data: pendingData, isLoading: isPendingLoading } = useQuery({
+    queryKey: analyticsKeys.pendingCount(),
+    queryFn: getPendingOrdersCount,
+  });
+
+  const pendingCount = pendingData?.data?.pendingOrdersCount;
+
+  // Dynamic comparison label based on active tab and date range
   const getComparisonLabel = () => {
     if (activeTab === "today") return "From yesterday";
     if (activeTab === "week") return "From last week";
     if (activeTab === "month") return "From last month";
     if (activeTab === "quarter") return "From last quarter";
     if (activeTab === "year") return "From last year";
+
+    // For custom date range: compute duration and compare with equivalent prior days
+    if (dateRange && dateRange[0] && dateRange[1]) {
+      const diffDays = Math.max(dateRange[1].diff(dateRange[0], "day") + 1, 1);
+      if (diffDays === 1) return "From previous day";
+      return `From previous ${diffDays} days`;
+    }
+
     return "From previous period";
   };
 
   const periodLabel = getComparisonLabel();
-
-  // Trending Arrow SVG icon matching reference design
-  const TrendUpIcon = () => (
-    <svg
-      className="w-3.5 h-3.5 stroke-current"
-      viewBox="0 0 24 24"
-      fill="none"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-      <polyline points="17 6 23 6 23 12" />
-    </svg>
-  );
 
   return (
     <div className="space-y-6">
@@ -141,7 +261,7 @@ const AnalyticsDashboard = () => {
                 value={dateRange}
                 disabledDate={disabledDate}
                 onChange={handleCustomDateChange}
-                allowClear={false}
+                allowClear={false}  
                 format="YYYY-MM-DD"
                 className="border-none bg-transparent hover:bg-transparent shadow-none"
               />
@@ -152,95 +272,108 @@ const AnalyticsDashboard = () => {
 
       {/* Row 1: Key Metric Cards (KPIs) with Big Bold Typography */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-stretch">
-        {/* Card 1: Gross Revenue */}
-        <div className="bg-white p-6 rounded-xl border border-gray-200/80 shadow-sm hover:shadow-md transition-shadow flex flex-col">
-          <div>
-            <div className="text-[15px] font-medium text-gray-500">
-              Gross revenue
+        {isSalesLoading ? (
+          <>
+            <KpiSkeleton />
+            <KpiSkeleton />
+            <KpiSkeleton />
+          </>
+        ) : (
+          <>
+            {/* Card 1: Gross Revenue */}
+            <div className="bg-white p-6 rounded-xl border border-gray-200/80 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+              <div>
+                <div className="text-[15px] font-medium text-gray-500">
+                  Gross revenue
+                </div>
+                <div className="text-4xl font-bold tracking-tight text-gray-900 mt-2">
+                  {formatCurrency(current?.totalRevenue ?? salesSummary?.totalRevenue)}
+                </div>
+              </div>
+              <div className="flex-1 my-3" />
+              <div className="flex items-center gap-2">
+                {renderTrendBadge(change?.revenuePct)}
+                <span className="text-xs text-gray-400">{periodLabel}</span>
+              </div>
             </div>
-            <div className="text-4xl font-bold tracking-tight text-gray-900 mt-2">
-              $14,509
-            </div>
-          </div>
-          <div className="flex-1 my-3" />
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-600">
-              <TrendUpIcon />
-              21%
-            </span>
-            <span className="text-xs text-gray-400">{periodLabel}</span>
-          </div>
-        </div>
 
-        {/* Card 2: Average Order Value */}
-        <div className="bg-white p-6 rounded-xl border border-gray-200/80 shadow-sm hover:shadow-md transition-shadow flex flex-col">
-          <div>
-            <div className="text-[15px] font-medium text-gray-500">
-              Avg. order value
+            {/* Card 2: Average Order Value */}
+            <div className="bg-white p-6 rounded-xl border border-gray-200/80 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+              <div>
+                <div className="text-[15px] font-medium text-gray-500">
+                  Avg. order value
+                </div>
+                <div className="text-4xl font-bold tracking-tight text-gray-900 mt-2">
+                  {formatCurrency(current?.averageOrderValue ?? salesSummary?.averageOrderValue)}
+                </div>
+              </div>
+              <div className="flex-1 my-3" />
+              <div className="flex items-center gap-2">
+                {renderTrendBadge(change?.aovDelta, true)}
+                <span className="text-xs text-gray-400">{periodLabel}</span>
+              </div>
             </div>
-            <div className="text-4xl font-bold tracking-tight text-gray-900 mt-2">
-              $204
-            </div>
-          </div>
-          <div className="flex-1 my-3" />
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-600">
-              <TrendUpIcon />
-              $53
-            </span>
-            <span className="text-xs text-gray-400">{periodLabel}</span>
-          </div>
-        </div>
 
-        {/* Card 3: Completed Orders */}
-        <div className="bg-white p-6 rounded-xl border border-gray-200/80 shadow-sm hover:shadow-md transition-shadow flex flex-col">
-          <div>
-            <div className="text-[15px] font-medium text-gray-500">
-              Completed orders
+            {/* Card 3: Completed Orders */}
+            <div className="bg-white p-6 rounded-xl border border-gray-200/80 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+              <div>
+                <div className="text-[15px] font-medium text-gray-500">
+                  Completed orders
+                </div>
+                <div className="text-4xl font-bold tracking-tight text-gray-900 mt-2">
+                  {formatNumber(current?.totalOrders ?? salesSummary?.totalOrders)}
+                </div>
+              </div>
+              <div className="flex-1 my-3" />
+              <div className="flex items-center gap-2">
+                {renderTrendBadge(change?.ordersPct)}
+                <span className="text-xs text-gray-400">{periodLabel}</span>
+              </div>
             </div>
-            <div className="text-4xl font-bold tracking-tight text-gray-900 mt-2">
-              1,250
-            </div>
-          </div>
-          <div className="flex-1 my-3" />
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-600">
-              <TrendUpIcon />
-              12%
-            </span>
-            <span className="text-xs text-gray-400">{periodLabel}</span>
-          </div>
-        </div>
+          </>
+        )}
 
-        {/* Card 4: Action Alert (Pending Orders) */}
-        <div className="bg-white p-6 rounded-xl border border-amber-200/80 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden flex flex-col">
-          <div>
+        {/* Card 4: Action Alert (Pending Orders) — independent, polled */}
+        {isPendingLoading ? (
+          <div className="bg-white p-6 rounded-xl border border-amber-200/80 shadow-sm flex flex-col">
             <div className="flex items-center justify-between">
-              <span className="text-[15px] font-medium text-amber-700">
-                Pending orders
-              </span>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 animate-pulse">
-                Live Action
-              </span>
+              <Skeleton.Input active size="small" className="!w-28 !h-4" />
+              <Skeleton.Input active size="small" className="!w-20 !h-5" />
             </div>
-            <div className="text-4xl font-bold tracking-tight text-amber-600 mt-2">
-              15
+            <Skeleton.Input active size="large" className="!w-16 !h-10 mt-2" />
+            <div className="flex-1 my-3" />
+            <div className="flex items-center justify-between">
+              <Skeleton.Input active size="small" className="!w-36 !h-4" />
+              <Skeleton.Input active size="small" className="!w-24 !h-4" />
             </div>
           </div>
-          <div className="flex-1 my-3" />
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-400">
-              Awaiting merchant review
-            </span>
-            <button
-              type="button"
-              onClick={() => navigate("/admin/orders")}
-              className="text-xs font-semibold text-amber-600 hover:text-amber-700 hover:underline inline-flex items-center gap-1 cursor-pointer"
-            >
-              Process orders <ArrowRightOutlined className="text-[10px]" />
-            </button>
+        ) : (
+          <div className="bg-white p-6 rounded-xl border border-amber-200/80 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden flex flex-col">
+            <div>
+              <div>
+                <span className="text-[15px] font-medium text-amber-700">
+                  Pending orders
+                </span>
+              </div>
+              <div className="text-4xl font-bold tracking-tight text-amber-600 mt-2">
+                {formatNumber(pendingCount)}
+              </div>
+            </div>
+            <div className="flex-1 my-3" />
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-400">
+                Awaiting merchant review
+              </span>
+              <button
+                type="button"
+                onClick={() => navigate("/admin/orders")}
+                className="text-xs font-semibold text-amber-600 hover:text-amber-700 hover:underline inline-flex items-center gap-1 cursor-pointer"
+              >
+                Process orders <ArrowRightOutlined className="text-[10px]" />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Row 2: Trends & Leaderboard */}

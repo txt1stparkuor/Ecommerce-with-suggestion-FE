@@ -60,3 +60,26 @@ export const orderKeys = {
   // Orders belonging to the current user
   myOrders: () => [...orderKeys.all, 'me'],
 }
+
+export const analyticsKeys = {
+  all: ['analytics'],
+  
+  // Sales summary KPI (date-range dependent)
+  salesSummaries: () => [...analyticsKeys.all, 'sales-summary'],
+  salesSummary: (params) => [...analyticsKeys.salesSummaries(), params],
+  
+  // Pending orders count (independent)
+  pendingCount: () => [...analyticsKeys.all, 'pending-count'],
+  
+  // Sales trend chart (date-range dependent)
+  salesTrends: () => [...analyticsKeys.all, 'sales-trend'],
+  salesTrend: (params) => [...analyticsKeys.salesTrends(), params],
+  
+  // Top products leaderboard
+  topProductsList: () => [...analyticsKeys.all, 'top-products'],
+  topProducts: (params) => [...analyticsKeys.topProductsList(), params],
+  
+  // Low stock inventory
+  lowStockList: () => [...analyticsKeys.all, 'low-stock'],
+  lowStock: (params) => [...analyticsKeys.lowStockList(), params],
+}

@@ -22,7 +22,7 @@ import {
 } from "../../../apis/order.api";
 import { EyeOutlined, EditOutlined } from "@ant-design/icons";
 import useDebounce from "../../../hooks/useDebounce";
-import { orderKeys } from "@/constants/queryKeys";
+import { orderKeys, analyticsKeys } from "@/constants/queryKeys";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -73,6 +73,7 @@ const OrderManagement = () => {
     onSuccess: () => {
       toast.success("Order status updated successfully");
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       setIsUpdateModalOpen(false);
       setSelectedOrder(null);
     },
@@ -172,7 +173,7 @@ const OrderManagement = () => {
         ),
         onOk() {},
       });
-    } catch (error) {
+    } catch {
       toast.error("Failed to fetch order details");
     }
   };

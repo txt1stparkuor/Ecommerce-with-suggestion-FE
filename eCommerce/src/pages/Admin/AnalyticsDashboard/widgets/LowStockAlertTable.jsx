@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import useDebounce from "@/hooks/useDebounce";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -23,6 +23,9 @@ import {
 } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getLowStockProducts } from "@/apis/analytics.api";
+import { analyticsKeys, productKeys } from "@/constants/queryKeys";
 
 // Yup schema for the stock update modal — reuses the shared stockQuantityField rule
 const stockSchema = yup.object({
@@ -40,98 +43,55 @@ const thresholdSchema = yup.object({
     .required('Threshold is required'),
 });
 
-// Mock dataset strictly matching backend specification:
-// GET /api/v1/analytics/inventory/low-stock
-// Query parameters: threshold (default 10), pageNum (1-indexed), pageSize (default 10)
-const INITIAL_LOW_STOCK_ITEMS = [
-  {
-    productId: "prod-101",
-    productName: "Ergonomic Mesh Office Chair with Lumbar Support",
-    stockQuantity: 0,
-    price: 189.99,
-  },
-  {
-    productId: "prod-102",
-    productName: "Mechanical Gaming Keyboard RGB Backlit",
-    stockQuantity: 1,
-    price: 89.5,
-  },
-  {
-    productId: "prod-103",
-    productName: 'Ultra-wide Curved Gaming Monitor 34"',
-    stockQuantity: 2,
-    price: 499.0,
-  },
-  {
-    productId: "prod-104",
-    productName: "True Wireless Earbuds with ANC",
-    stockQuantity: 3,
-    price: 59.99,
-  },
-  {
-    productId: "prod-105",
-    productName: "Stainless Steel Insulated Water Bottle 750ml",
-    stockQuantity: 4,
-    price: 24.5,
-  },
-  {
-    productId: "prod-106",
-    productName: "Fast Wireless Charging Stand 15W",
-    stockQuantity: 5,
-    price: 29.99,
-  },
-  {
-    productId: "prod-107",
-    productName: "Smart Fitness Watch with Heart Rate Monitor",
-    stockQuantity: 6,
-    price: 79.0,
-  },
-  {
-    productId: "prod-108",
-    productName: "Aluminum Laptop Stand Adjustable",
-    stockQuantity: 7,
-    price: 34.99,
-  },
-  {
-    productId: "prod-109",
-    productName: "HD 1080P Web Camera with Privacy Shutter",
-    stockQuantity: 8,
-    price: 45.0,
-  },
-  {
-    productId: "prod-110",
-    productName: "Memory Foam Ergonomic Seat Cushion",
-    stockQuantity: 9,
-    price: 32.5,
-  },
-  {
-    productId: "prod-111",
-    productName: "USB-C Multi-port Adapter Hub 7-in-1",
-    stockQuantity: 10,
-    price: 39.99,
-  },
-  {
-    productId: "prod-112",
-    productName: "Bluetooth Portable Waterproof Speaker",
-    stockQuantity: 11,
-    price: 49.99,
-  },
-  {
-    productId: "prod-113",
-    productName: "Leather Desk Pad Protector Blotter Mat",
-    stockQuantity: 12,
-    price: 19.99,
-  },
-];
+// Stock badge helper strictly adhering to design requirements:
+// 0 stock: Red tag (error) "Out of Stock"
+// 1-5 stock: Orange tag (warning) "Critical Low"
+// > 5 stock: Yellow/Gold tag with exact quantity
+const renderStockTag = (quantity) => {
+  if (quantity === 0) {
+    return (
+      <Tag
+        color="error"
+        icon={<CloseCircleOutlined />}
+        className="font-semibold text-xs px-2.5 py-0.5 rounded-md"
+      >
+        Out of Stock (0)
+      </Tag>
+    );
+  }
+  if (quantity <= 5) {
+    return (
+      <Tag
+        color="warning"
+        icon={<ExclamationCircleOutlined />}
+        className="font-semibold text-xs px-2.5 py-0.5 rounded-md"
+      >
+        Critical Low ({quantity})
+      </Tag>
+    );
+  }
+  return (
+    <Tag
+      color="gold"
+      icon={<WarningOutlined />}
+      className="font-semibold text-xs px-2.5 py-0.5 rounded-md"
+    >
+      Low Stock ({quantity})
+    </Tag>
+  );
+};
 
 const LowStockAlertTable = ({ className = "" }) => {
-  const [items, setItems] = useState(INITIAL_LOW_STOCK_ITEMS);
+  const queryClient = useQueryClient();
 
-  // Pagination state
+  // Pagination state (1-indexed matching backend spec)
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 5,
   });
+
+  // Local optimistic overrides when stock is updated via modal
+  const [localOverrides, setLocalOverrides] = useState({});
 
   // Stock edit modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -160,7 +120,7 @@ const LowStockAlertTable = ({ className = "" }) => {
     mode: 'onChange',
   });
 
-  // Watch the raw RHF value and debounce it so the table only re-filters
+  // Watch the raw RHF value and debounce it so the table only re-queries
   // after the user pauses typing (not on every keystroke).
   const thresholdWatched = watchThreshold('threshold');
   const debouncedThreshold = useDebounce(thresholdWatched, 400);
@@ -174,12 +134,70 @@ const LowStockAlertTable = ({ className = "" }) => {
       ? debouncedThreshold
       : 10;
 
-  // Filter items matching current threshold & sort by lowest stock first
-  const filteredItems = useMemo(() => {
-    return items
-      .filter((item) => item.stockQuantity <= threshold)
+  // Reset page to 1 whenever threshold filter changes
+  useEffect(() => {
+    setPagination((prev) => (prev.current === 1 ? prev : { ...prev, current: 1 }));
+  }, [threshold]);
+
+  // Query parameters strictly matching backend specification:
+  // GET /api/v1/analytics/inventory/low-stock?threshold=...&pageNum=...&pageSize=...
+  const queryParams = useMemo(
+    () => ({
+      threshold,
+      pageNum: pagination.current,
+      pageSize: pagination.pageSize,
+    }),
+    [threshold, pagination]
+  );
+
+  const {
+    data: lowStockResponse,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: analyticsKeys.lowStock(queryParams),
+    queryFn: () => getLowStockProducts(queryParams),
+  });
+
+  // Normalize list from backend response
+  const rawItems = useMemo(() => {
+    const rawList = Array.isArray(lowStockResponse?.data?.items)
+      ? lowStockResponse.data.items
+      : Array.isArray(lowStockResponse?.data?.content)
+      ? lowStockResponse.data.content
+      : Array.isArray(lowStockResponse?.data)
+      ? lowStockResponse.data
+      : Array.isArray(lowStockResponse)
+      ? lowStockResponse
+      : [];
+
+    return rawList.map((item, index) => ({
+      productId: item.productId ?? item.id ?? `prod-${index}`,
+      productName: item.productName ?? item.name ?? "Unknown Product",
+      stockQuantity: Number(item.stockQuantity ?? item.stock ?? 0),
+      price: Number(item.price ?? 0),
+    }));
+  }, [lowStockResponse]);
+
+  // Extract total elements from pagination metadata
+  const totalElements =
+    lowStockResponse?.data?.meta?.totalElements ??
+    lowStockResponse?.data?.totalElements ??
+    lowStockResponse?.data?.total ??
+    rawItems.length;
+
+  // Merge optimistic local overrides and ensure lowest stock sorts first
+  const displayItems = useMemo(() => {
+    return rawItems
+      .map((item) => {
+        if (localOverrides[item.productId] !== undefined) {
+          return { ...item, stockQuantity: localOverrides[item.productId] };
+        }
+        return item;
+      })
       .sort((a, b) => a.stockQuantity - b.stockQuantity);
-  }, [items, threshold]);
+  }, [rawItems, localOverrides]);
 
   // Open modal to quick-update stock
   const handleOpenStockModal = (record) => {
@@ -199,13 +217,14 @@ const LowStockAlertTable = ({ className = "" }) => {
     if (!selectedProduct) return;
     const newQuantity = Number(data.newStock);
 
-    setItems((prev) =>
-      prev.map((item) =>
-        item.productId === selectedProduct.productId
-          ? { ...item, stockQuantity: newQuantity }
-          : item,
-      ),
-    );
+    // Optimistically update stock in UI
+    setLocalOverrides((prev) => ({
+      ...prev,
+      [selectedProduct.productId]: newQuantity,
+    }));
+
+    queryClient.invalidateQueries({ queryKey: analyticsKeys.lowStockList() });
+    queryClient.invalidateQueries({ queryKey: productKeys.lists() });
 
     toast.success(
       `Stock for "${selectedProduct.productName}" updated to ${newQuantity}`,
@@ -213,54 +232,16 @@ const LowStockAlertTable = ({ className = "" }) => {
     handleCloseModal();
   };
 
-  // Stock badge helper strictly adhering to design requirements:
-  // 0 stock: Red tag (error) "Out of Stock"
-  // 1-5 stock: Orange tag (warning) "Critical Low"
-  // > 5 stock: Yellow/Gold tag with exact quantity
-  const renderStockTag = (quantity) => {
-    if (quantity === 0) {
-      return (
-        <Tag
-          color="error"
-          icon={<CloseCircleOutlined />}
-          className="font-semibold text-xs px-2.5 py-0.5 rounded-md"
-        >
-          Out of Stock (0)
-        </Tag>
-      );
-    }
-    if (quantity <= 5) {
-      return (
-        <Tag
-          color="warning"
-          icon={<ExclamationCircleOutlined />}
-          className="font-semibold text-xs px-2.5 py-0.5 rounded-md"
-        >
-          Critical Low ({quantity})
-        </Tag>
-      );
-    }
-    return (
-      <Tag
-        color="gold"
-        icon={<WarningOutlined />}
-        className="font-semibold text-xs px-2.5 py-0.5 rounded-md"
-      >
-        Low Stock ({quantity})
-      </Tag>
-    );
-  };
-
   const columns = [
     {
       title: "Product",
       dataIndex: "productName",
-      key: "productName",
+      key: "productName", 
       render: (name, record) => (
         <div className="flex flex-col">
           <Tooltip title={name}>
             <Link
-              to={`/admin/products?search=${encodeURIComponent(name)}`}
+              to={`/admin/products?keyword=${encodeURIComponent(name)}`}
               className="text-sm font-semibold text-gray-800 hover:text-[#ee4d2d] transition-colors line-clamp-1"
             >
               {name}
@@ -278,7 +259,7 @@ const LowStockAlertTable = ({ className = "" }) => {
       key: "price",
       render: (price) => (
         <span className="font-semibold text-gray-900 text-sm">
-          ${price.toFixed(2)}
+          ${Number(price || 0).toFixed(2)}
         </span>
       ),
     },
@@ -365,15 +346,31 @@ const LowStockAlertTable = ({ className = "" }) => {
           </div>
         }
       >
+        {isError && (
+          <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-100 flex items-center justify-between">
+            <span className="text-xs text-red-600 font-medium">
+              Failed to load low-stock inventory data.
+            </span>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="text-xs font-semibold text-red-700 hover:underline cursor-pointer"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {/* Table strictly sized by flex and content without hardcoded height */}
         <Table
           columns={columns}
-          dataSource={filteredItems}
+          dataSource={displayItems}
           rowKey="productId"
+          loading={isLoading}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,
-            total: filteredItems.length,
+            total: totalElements,
             onChange: (page, pageSize) =>
               setPagination({ current: page, pageSize }),
             showSizeChanger: true,

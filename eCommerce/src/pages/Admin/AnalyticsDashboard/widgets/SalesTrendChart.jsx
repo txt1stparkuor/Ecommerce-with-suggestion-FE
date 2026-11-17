@@ -12,6 +12,9 @@ import {
   Legend,
 } from "recharts";
 import dayjs from "dayjs";
+import { useQuery } from "@tanstack/react-query";
+import { getSalesTrend } from "@/apis/analytics.api";
+import { analyticsKeys } from "@/constants/queryKeys";
 
 // Custom interactive chart tooltip with sleek typography
 const CustomTooltip = ({ active, payload, label }) => {
@@ -32,7 +35,7 @@ const CustomTooltip = ({ active, payload, label }) => {
               Revenue:
             </span>
             <span className="font-bold text-gray-900 text-sm">
-              ${revItem?.value?.toLocaleString()}
+              ${revItem?.value != null ? Number(revItem.value).toLocaleString() : "0"}
             </span>
           </div>
           <div className="flex items-center justify-between gap-4">
@@ -41,7 +44,7 @@ const CustomTooltip = ({ active, payload, label }) => {
               Orders:
             </span>
             <span className="font-bold text-gray-900 text-sm">
-              {orderItem?.value} orders
+              {orderItem?.value != null ? orderItem.value : 0} orders
             </span>
           </div>
         </div>
@@ -51,39 +54,87 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-const SalesTrendChart = ({ dateRange, activeTab, isLoading = false, className = "" }) => {
-  // Generate continuous daily data synchronized with the global dateRange
-  const trendData = useMemo(() => {
+const SalesTrendChart = ({ dateRange, isLoading: externalLoading = false, className = "" }) => {
+  // Format date range params (clamped to max 90 days per backend API contract)
+  const { dateParams, rawDays, totalDays, adjustedStart } = useMemo(() => {
     const end = dateRange?.[1] ? dayjs(dateRange[1]) : dayjs();
     const start = dateRange?.[0] ? dayjs(dateRange[0]) : end.subtract(29, "day");
 
-    // Days count (clamped to max 90 days per backend API contract)
-    const rawDays = Math.max(end.diff(start, "day") + 1, 1);
-    const totalDays = Math.min(rawDays, 90);
-    const adjustedStart =
-      rawDays > 90 ? end.subtract(89, "day") : start;
+    const daysCount = Math.max(end.diff(start, "day") + 1, 1);
+    const clampedDays = Math.min(daysCount, 90);
+    const calculatedStart = daysCount > 90 ? end.subtract(89, "day") : start;
 
+    return {
+      dateParams: {
+        from: calculatedStart.format("YYYY-MM-DD"),
+        to: end.format("YYYY-MM-DD"),
+      },
+      rawDays: daysCount,
+      totalDays: clampedDays,
+      adjustedStart: calculatedStart,
+    };
+  }, [dateRange]);
+
+  // Query sales trend data from backend API
+  const {
+    data: trendResponse,
+    isLoading: isQueryLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: analyticsKeys.salesTrend(dateParams),
+    queryFn: () => getSalesTrend(dateParams),
+    enabled: Boolean(dateParams?.from && dateParams?.to),
+  });
+
+  const isLoading = externalLoading || isQueryLoading;
+
+  // Process and zero-fill daily data synchronized with the date range
+  const trendData = useMemo(() => {
+    // Extract list from various possible backend response envelopes
+    const rawList = Array.isArray(trendResponse?.data)
+      ? trendResponse.data
+      : Array.isArray(trendResponse?.data?.trend)
+      ? trendResponse.data.trend
+      : Array.isArray(trendResponse?.data?.dailyTrends)
+      ? trendResponse.data.dailyTrends
+      : Array.isArray(trendResponse)
+      ? trendResponse
+      : [];
+
+    // Map existing records by date string for O(1) matching
+    const dataMap = new Map();
+    rawList.forEach((item) => {
+      const dStr = item.date || item.orderDate || item.day;
+      if (dStr) {
+        const formattedKey = dayjs(dStr).format("YYYY-MM-DD");
+        dataMap.set(formattedKey, {
+          revenue: Number(item.totalRevenue ?? item.revenue ?? 0),
+          orderCount: Number(
+            item.totalOrders ?? item.orderCount ?? item.ordersCount ?? item.orders ?? 0
+          ),
+        });
+      }
+    });
+
+    // Build continuous timeline with zero-filling for gaps
     const list = [];
     for (let i = 0; i < totalDays; i++) {
       const d = adjustedStart.add(i, "day");
-      const isWeekend = d.day() === 0 || d.day() === 6;
-
-      // Realistic fluctuation with weekend peaks
-      const baseOrders = isWeekend
-        ? 22 + Math.floor(Math.sin(i * 0.5) * 6 + Math.random() * 8)
-        : 14 + Math.floor(Math.cos(i * 0.4) * 4 + Math.random() * 6);
-      const avgTicket = 92 + Math.floor(Math.random() * 35);
-      const revenue = Math.round(baseOrders * avgTicket);
+      const key = d.format("YYYY-MM-DD");
+      const matched = dataMap.get(key);
 
       list.push({
-        date: d.format("YYYY-MM-DD"),
-        formattedDate: totalDays <= 1 ? d.format("MMM DD, YYYY") : d.format("MMM DD"),
-        revenue: revenue,
-        orderCount: baseOrders,
+        date: key,
+        formattedDate:
+          totalDays <= 1 ? d.format("MMM DD, YYYY") : d.format("MMM DD"),
+        revenue: matched ? matched.revenue : 0,
+        orderCount: matched ? matched.orderCount : 0,
       });
     }
+
     return list;
-  }, [dateRange]);
+  }, [trendResponse, totalDays, adjustedStart]);
 
   // Aggregate totals for the selected window
   const totals = useMemo(() => {
@@ -100,12 +151,50 @@ const SalesTrendChart = ({ dateRange, activeTab, isLoading = false, className = 
   if (isLoading) {
     return (
       <Card
-        className="shadow-sm border-gray-100 rounded-xl"
-        title={<span className="font-semibold text-gray-800">Sales & Order Trend</span>}
+        className={`shadow-sm border-gray-100 rounded-xl ${className}`}
+        title={
+          <div className="py-1">
+            <div className="text-base font-bold text-gray-900">
+              Daily Sales & Order Trend
+            </div>
+            <div className="text-xs text-gray-400 font-normal mt-0.5">
+              Continuous confirmed sales volume & revenue progression
+            </div>
+          </div>
+        }
       >
         <div className="min-h-[320px] flex flex-col justify-center gap-4 py-8 px-4">
           <Skeleton.Input active block style={{ minHeight: 24, width: "40%" }} />
           <Skeleton.Button active block style={{ minHeight: 220, borderRadius: 8 }} />
+        </div>
+      </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card
+        className={`shadow-sm border-gray-100 rounded-xl ${className}`}
+        title={
+          <div className="py-1">
+            <div className="text-base font-bold text-gray-900">
+              Daily Sales & Order Trend
+            </div>
+            <div className="text-xs text-gray-400 font-normal mt-0.5">
+              Continuous confirmed sales volume & revenue progression
+            </div>
+          </div>
+        }
+      >
+        <div className="min-h-[320px] flex flex-col items-center justify-center gap-3 py-8 text-center">
+          <p className="text-sm text-gray-500">Failed to load sales trend data.</p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="px-3 py-1.5 text-xs font-medium text-white bg-[#ee4d2d] hover:bg-[#d03e1f] rounded-lg transition-colors cursor-pointer"
+          >
+            Retry
+          </button>
         </div>
       </Card>
     );
@@ -123,7 +212,8 @@ const SalesTrendChart = ({ dateRange, activeTab, isLoading = false, className = 
             Daily Sales & Order Trend
           </div>
           <div className="text-xs text-gray-400 font-normal mt-0.5">
-            Continuous confirmed sales volume & revenue progression for selected period
+            Continuous confirmed sales volume & revenue progression
+            {rawDays > 90 ? " (showing last 90 days)" : " for selected period"}
           </div>
         </div>
       }
