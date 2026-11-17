@@ -30,7 +30,7 @@ import {
 } from "../../../apis/product.api";
 import useDebounce from "../../../hooks/useDebounce";
 import ProductForm from "../../../components/ProductForm/ProductForm";
-import { productKeys } from "@/constants/queryKeys";
+import { productKeys, analyticsKeys } from "@/constants/queryKeys";
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -112,6 +112,7 @@ const ProductManagement = () => {
     onSuccess: () => {
       toast.success("Product created successfully");
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.lowStockList() });
       setIsModalOpen(false);
     },
     onError: (error) => {
@@ -125,6 +126,8 @@ const ProductManagement = () => {
       toast.success("Product updated successfully");
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
       queryClient.invalidateQueries({ queryKey: productKeys.details() });
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.lowStockList() });
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.topProductsList() });
       setIsModalOpen(false);
       setEditingProduct(null);
     },
@@ -139,6 +142,8 @@ const ProductManagement = () => {
       toast.success("Product deleted successfully");
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
       queryClient.invalidateQueries({ queryKey: productKeys.details() });
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.lowStockList() });
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.topProductsList() });
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || "Failed to delete product");
@@ -166,7 +171,7 @@ const ProductManagement = () => {
       const res = await getProductById(id);
       setEditingProduct(res.data);
       setIsModalOpen(true);
-    } catch (error) {
+    } catch {
       toast.error("Failed to fetch product details");
     }
   };
@@ -212,7 +217,7 @@ const ProductManagement = () => {
         ),
         onOk() {},
       });
-    } catch (error) {
+    } catch {
       toast.error("Failed to fetch product details");
     }
   };
