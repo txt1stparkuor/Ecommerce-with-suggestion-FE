@@ -4,7 +4,7 @@ import { Typography, Button, Image, Tag, Empty, Spin } from "antd";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { getMyOrders, cancelOrder } from "../../apis/order.api";
-import { orderKeys } from "@/constants/queryKeys";
+import { orderKeys, analyticsKeys } from "@/constants/queryKeys";
 
 const { Title, Text } = Typography;
 
@@ -21,6 +21,7 @@ const OrderHistory = () => {
     mutationFn: (orderId) => cancelOrder(orderId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: orderKeys.all });
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       toast.success("Order cancelled successfully");
     },
     onError: (err) => {

@@ -4,6 +4,7 @@ import AdminLayout from '../layouts/AdminLayout'
 import OrderManagement from '../pages/Admin/OrderManagement/OrderManagement'
 import ProductManagement from '../pages/Admin/ProductManagement/ProductManagement'
 import UserManagement from '../pages/Admin/UserManagement/UserManagement'
+import AnalyticsDashboard from '../pages/Admin/AnalyticsDashboard/AnalyticsDashboard'
 import ProtectedRoute from '../components/ProtectedRoute/ProtectedRoute'
 
 const adminRoutes = [
@@ -16,7 +17,11 @@ const adminRoutes = [
         children: [
           {
             index: true,
-            element: <Navigate to="/admin/products" replace />,
+            element: <Navigate to="/admin/analytics" replace />,
+          },
+          {
+            path: 'analytics',
+            element: <AnalyticsDashboard />,
           },
           {
             path: 'products',

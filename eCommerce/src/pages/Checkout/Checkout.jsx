@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Typography, Input, Button, Image } from 'antd'
 import toast from 'react-hot-toast'
 import { createOrder } from '../../apis/order.api'
-import { cartKeys, orderKeys } from '@/constants/queryKeys'
+import { cartKeys, orderKeys, analyticsKeys } from '@/constants/queryKeys'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -38,6 +38,8 @@ const Checkout = () => {
       toast.success('Order placed successfully')
       queryClient.invalidateQueries({ queryKey: cartKeys.all })
       queryClient.invalidateQueries({ queryKey: orderKeys.all }) 
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.pendingCount() })
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.lowStockList() })
       navigate('/')
     },
     onError: () => {

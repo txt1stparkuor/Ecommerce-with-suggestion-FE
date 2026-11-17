@@ -41,4 +41,11 @@ export const ApiConstant = {
     cancel: (orderId) => `/orders/${orderId}/cancel`,
     updateStatus: (orderId) => `/orders/${orderId}/status`,
   },
+  analytics: {
+    salesSummary: "/analytics/sales/summary",
+    pendingCount: "/analytics/orders/pending-count",
+    salesTrend: "/analytics/sales/trend",
+    topProducts: "/analytics/products/top",
+    lowStock: "/analytics/inventory/low-stock",
+  },
 };
